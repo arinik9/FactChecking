@@ -2,17 +2,7 @@
 Le sujet du projet spécifique à l'INSA en 2015-2015 pendant le 1er semestre
 
 Données de base:
-http://www.insee.fr/fr/ppp/bases-de-donnees/donnees-detaillees/chomage-zone-2010/chomage-zone-t1-2003-t2-2015.xls
-http://www.bdm.insee.fr/bdm2/affichageSeries?bouton=T%E9l%E9charger&idbank=001665062&idbank=001665063&idbank=001665064&idbank=001665078&idbank=001665079&idbank=001665080&idbank=001665092&idbank=001665093&idbank=001665094&codeGroupe=1474
-
-TO DO:
-Changer le chemin du fichier des données chomage (.csv) dans le script populate.sql
-
-Taches Pour la reunion 2:
-- upload le fichier poplation
-	 => faire somme en excel
-- la table 'chomage' => regionaliser (par an)
-- tester la fusion des 2 tables 'chomage' et 'population'
+http://www.bdm.insee.fr/bdm2/affichageSeries?bouton=T%E9l%E9charger&idbank=001688358&idbank=001688526&codeGroupe=1533
 
 Affirmation 1: Selon Sarkozy le chômage a augmenté de 422.000 (personnes) entre 2007 et 2012
 
