@@ -8,4 +8,12 @@ http://www.insee.fr/fr/ppp/bases-de-donnees/donnees-detaillees/pop-17ans-dipl/po
 TO DO:
 Changer le chemin du fichier des données chomage (.csv) dans le script populate.sql
 
+Taches Pour la reunion 2:
+- upload le fichier poplation
+	 => faire somme en excel
+- la table 'chomage' => regionaliser (par an)
+- tester la fusion des 2 tables 'chomage' et 'population'
 
+Affirmation 1: Selon Sarkozy le chômage a augmenté de 422.000 (personnes) entre 2007 et 2012
+Affirmation 2: ?
+Affirmation 3: ?
