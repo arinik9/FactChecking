@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS chomage (
 	T1_2012 FLOAT(3,1)
 );
 
-LOAD DATA INFILE '/home/hh/prog/FactChecking/chomageParZoneEmploi_trimestrielle_France.csv' 
+LOAD DATA INFILE '/home/nejat/ProjSpec/FactChecking/chomageParZoneEmploi_trimestrielle_France.csv' 
 INTO TABLE chomage 
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"'
