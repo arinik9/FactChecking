@@ -15,5 +15,6 @@ Taches Pour la reunion 2:
 - tester la fusion des 2 tables 'chomage' et 'population'
 
 Affirmation 1: Selon Sarkozy le chômage a augmenté de 422.000 (personnes) entre 2007 et 2012
+
 Affirmation 2: ?
 Affirmation 3: ?
