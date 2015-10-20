@@ -36,3 +36,14 @@ FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS;
+
+CREATE TABLE IF NOT EXISTS population (
+	annee INT NOT NULL,
+	population_active INT NOT NULL
+);
+LOAD DATA INFILE '/home/hh/prog/FactChecking/population-active.csv' 
+INTO TABLE population
+FIELDS TERMINATED BY ';' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
