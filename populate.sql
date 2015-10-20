@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS fact_checking;
+CREATE DATABASE fact_checking CHARACTER SET utf8 COLLATE utf8_general_ci;
 CONNECT fact_checking;
 CREATE TABLE IF NOT EXISTS chomage (
 	ZE2010 INT NOT NULL,
