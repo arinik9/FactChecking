@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS fact_checking;
+CREATE DATABASE fact_checking CHARACTER SET utf8 COLLATE utf8_general_ci;
 CONNECT fact_checking;
 CREATE TABLE IF NOT EXISTS chomage (
 	ZE2010 INT NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS chomage (
 	T1_2012 FLOAT(3,1)
 );
 
-LOAD DATA INFILE '/home/hh/prog/FactChecking/chomageParZoneEmploi_trimestrielle_France.csv' 
+LOAD DATA INFILE '/home/nejat/ProjSpec/FactChecking/chomageParZoneEmploi_trimestrielle_France.csv' 
 INTO TABLE chomage 
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"'
