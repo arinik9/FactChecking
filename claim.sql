@@ -1,5 +1,4 @@
 -- Le chômage a augmenté de 422 000 personnes pendant le mandat de Sarkozy.
--- Pendant les 30 premiers mois du mandat de Hollande 310 900 chômeurs ont été enregistrés en plus par rapport aux 30 derniers mois de Sarkozy.
 -- Q1
 SET @w = 5;
 SET @t= 5;
@@ -9,4 +8,24 @@ FROM (	SELECT SUM(millier) AS total FROM chomage
 		WHERE year BETWEEN t-@w-d+1 AND t-d) AS before,
 	 (	SELECT SUM(millier) AS total FROM chomage
 		WHERE year BETWEEN t-@w+1 AND t) AS after;
--- <Q1, (w=2, t=2001, d=6), 422000>
+-- <Q1, (@w, @t, @d), 422000>
+
+
+-- Pendant les 30 premiers mois du mandat de Hollande 310 900 chômeurs ont été enregistrés en plus par rapport aux 30 derniers mois de Sarkozy.
+-- Q2
+SET @w = 30;
+SET @t= '2014-10-01';
+SET @d = 30;
+-- Hollande
+SELECT bf.nb_chomeur - af.nb_chomeur 
+FROM ( SELECT nb_chomeur FROM chomagePE
+       WHERE mois = @t ) AS bf,
+     ( SELECT nb_chomeur FROM chomagePE
+       WHERE mois = @t - INTERVAL @w+1 MONTH ) AS af;
+
+-- Sarkozy
+SELECT bf.nb_chomeur - af.nb_chomeur 
+FROM ( SELECT nb_chomeur FROM chomagePE
+       WHERE mois = @t - INTERVAL @d MONTH ) AS bf,
+     ( SELECT nb_chomeur FROM chomagePE
+       WHERE mois = @t - INTERVAL @d+@w+1 MONTH ) AS af;
