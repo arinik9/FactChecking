@@ -8,4 +8,5 @@ http://travail-emploi.gouv.fr/etudes-recherches-statistiques-de,76/statistiques,
 Affirmation 1: Selon Sarkozy le chômage (def. BIT) a augmenté de 422 000 personnes pendant son mandat.
 
 Affirmation 2: Pendant les 30 premiers mois du mandat de Hollande 310 900 chômeurs ont été enregistrés en plus par rapport aux 30 derniers mois du mandat de Sarkozy.
+Article: http://www.lemonde.fr/les-decodeurs/breve/2014/12/12/chomage-hollande-fait-il-pire-que-sarkozy_4539810_4355770.html
 Affirmation 3: ?
