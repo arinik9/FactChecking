@@ -1,14 +1,18 @@
 -- Le chômage a augmenté de 422 000 personnes pendant le mandat de Sarkozy.
 -- Q1
-SET @w = 5;
-SET @t= 5;
-SET @d = 5;
-SELECT (after.total - before.total) * 1000
-FROM (	SELECT SUM(millier) AS total FROM chomage
-		WHERE year BETWEEN t-@w-d+1 AND t-d) AS before,
-	 (	SELECT SUM(millier) AS total FROM chomage
-		WHERE year BETWEEN t-@w+1 AND t) AS after;
 
+-- debut de mandat: 15 Mai 2007 
+	-- On prend annee=2007 AND trimestre=1 pour le debut
+	-- afin de comparer le valeur dernier semstre de Chirac
+	-- le chmage dans (annee=2007 AND trimestre=2) nous donne la valeur de la fin de semstre 2
+-- fin de mandat: 16 Mai 2012	
+
+SELECT (fin.millier-debut.millier)*1000 FROM 
+(SELECT millier FROM chomage 
+WHERE annee=2012 AND trimestre=1) AS fin,
+(SELECT millier FROM chomage 
+WHERE annee=2007 AND trimestre=1) AS debut; 
+-- r = 350000
 
 
 -- Pendant les 30 premiers mois du mandat de Hollande 310 900 chômeurs ont été enregistrés en plus par rapport aux 30 derniers mois de Sarkozy.
