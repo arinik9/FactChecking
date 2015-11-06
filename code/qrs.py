@@ -45,7 +45,16 @@ class qrs:
         for t in self.t_interval:
             for w in self.w_interval:
                 for d in self.d_interval:
-                    self.all_possible_parameters.put((t,w,d))
+                    year = t
+                    sarkozy_beginning_time = 2007
+                    if "-" in t: # if date is kind of (2013-04-15)
+                        ds = t.split("-")
+                        year = int(ds[0])+int(ds[1])/float(12)
+                        sarkozy_beginning_time = 2007+5/float(12)
+
+                    # we have a constraint: t-w-d > 2007 [sarkozy's beginning period]
+                    if year - w/float(12) - d/float(12) > sarkozy_beginning_time:
+                        self.all_possible_parameters.put((t,w,d))
 
     def setQuery(self, q):
         self.q = q
@@ -59,10 +68,11 @@ class qrs:
         self.sigma_t = sigma_t
 
     def getP(self):
-        while not self.all_possible_parameters.empty():
+        if not self.all_possible_parameters.empty():
 	        param = self.all_possible_parameters.get()
 	        self.backup_parameters.put(param)
 	        return param
+
 	    # pour que les parametres soient pretes a la prochaine requete
 	    # on recharge la queue self.all_possible_parameters
         while not self.backup_parameters.empty():
