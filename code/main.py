@@ -1,10 +1,19 @@
 #!/usr/bin/python
 from qrs import qrs
+import ConfigParser, os
 
 if __name__ == '__main__':
-
+    conf = ConfigParser.ConfigParser()
     obj = qrs('2014-10-01', 30, 30, 310900, 'increasing')
-    obj.connectToDb('localhost', 'root', '123', 'fact_checking')
+    conf_path = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + "/../db-config.ini"
+
+    conf.read(conf_path)
+    obj.connectToDb(
+        conf.get('DB', 'host'),
+        conf.get('DB', 'user'),
+        conf.get('DB', 'password'),
+        conf.get('DB', 'name')
+    )
     obj.setDbTableName('chomagePE')
   
     query = "SELECT hollande.chomage - sarkozy.chomage FROM ( SELECT bf.nb_chomeur - af.nb_chomeur AS chomage FROM ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s ) AS bf, ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s - INTERVAL %s MONTH ) AS af ) AS hollande, ( SELECT bf.nb_chomeur - af.nb_chomeur AS chomage FROM ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s - INTERVAL %s MONTH ) AS bf, ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s - INTERVAL %s MONTH ) AS af ) AS sarkozy;"
