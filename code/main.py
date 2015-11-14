@@ -20,7 +20,7 @@ if __name__ == '__main__':
     obj.setQuery(query)
 
     times = ['2008-01-01', '2015-08-01'] #TODO
-    width = [30]
+    widths = [30]
     durations = range(30,36)  # or range(15, 61) TO TEST less than 30
     obj.setParametersInterval(times, widths, durations)
     obj.setNaturalnessLevels([(1,1), (2.71, 60)]) # exponential =~ 2.71

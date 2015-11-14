@@ -1,7 +1,13 @@
 import MySQLdb
 import math
 import Queue
+from datetime import datetime, timedelta
 
+def sub_month(month, date):
+    for i in range(month):
+        date -= timedelta(days=1)
+        date = date.replace(day=1)
+    return date
 # QRS stands for Query Response Surface modelize a claim and is consituted by a parametrized database query
 # a set of para
 class qrs:
@@ -57,21 +63,20 @@ class qrs:
         self.t_interval = t
         self.w_interval = w
         self.d_interval = d
-        
-        for t in self.t_interval:
+        cur_period = datetime.strptime(self.t_interval[0], "%Y-%m-%d")
+        last_period = datetime.strptime(self.t_interval[1], "%Y-%m-%d")
+        sarkozy_beginning_time = datetime.strptime("2007-05-01", "%Y-%m-%d")
+
+        while cur_period <= last_period:
             for w in self.w_interval:
                 for d in self.d_interval:
-                    year = t
-                    sarkozy_beginning_time = 2007
-                    if '-' in t:
-                    # The date format is YYYY-MM-DD
-                        ds = t.split('-')
-                        year = int(ds[0]) + int(ds[1]) / float(12)
-                        sarkozy_beginning_time = 2007 + 5 / float(12)
+                    # we have a constraint: t-w-d > 2007 may [sarkozy's beginning period]
+                    limit = sub_month( d, sub_month(w, cur_period) )
+                    if limit > sarkozy_beginning_time:
+                        self.all_possible_parameters.put((str(cur_period),w,d))
+            cur_period += timedelta(days=32)
+            cur_period = cur_period.replace(day=1)
 
-                    # we have a constraint: t-w-d > 2007 [sarkozy's beginning period]
-                    if year - w/float(12) - d/float(12) > sarkozy_beginning_time:
-                        self.all_possible_parameters.put((t,w,d))
 
     def setQuery(self, q):
         self.q = q
