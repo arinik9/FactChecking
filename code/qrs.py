@@ -2,6 +2,8 @@ import MySQLdb
 import math
 import Queue
 from datetime import datetime, timedelta
+import numpy as np
+import matplotlib.pyplot as plt
 
 def sub_month(month, date):
     for i in range(month):
@@ -43,6 +45,7 @@ class qrs:
 
         """No naturalness levels specified"""
         self.naturalness_levels = []
+        self.timelist = []
 
     def connectToDb(self, host, username, passwd, dbname):
         self.db_name = dbname
@@ -74,6 +77,8 @@ class qrs:
                     limit = sub_month( d, sub_month(w, cur_period) )
                     if limit > sarkozy_beginning_time:
                         self.all_possible_parameters.put((str(cur_period),w,d))
+                        if str(cur_period) not in self.timelist:
+                            self.timelist.append(str(cur_period))
             cur_period += timedelta(days=32)
             cur_period = cur_period.replace(day=1)
 
@@ -159,3 +164,28 @@ class qrs:
             return r/float(self.r0) - 1
         return self.r0/float(r) - 1
 
+    def displaySr(self, x, matrix_sr):
+        #greener colors strengthen the claim
+        #redder colors weaken the claim
+        #print(matrix_sr)
+        plt.imshow(matrix_sr, interpolation='none',
+                aspect=matrix_sr.shape[1]/matrix_sr.shape[0])
+
+        plt.xticks(range(len(x)), x)
+        plt.jet()
+        plt.colorbar()
+
+        plt.show()
+
+    def displaySp(self, x, matrix_sp):
+        # darker colors indicates higher sensibility
+        #print(matrix_sp)
+        plt.imshow(matrix_sp, interpolation='none',
+                aspect=matrix_sp.shape[1]/matrix_sp.shape[0])
+
+        plt.xticks(range(len(x)), x)
+        plt.jet()
+        plt.colorbar()
+
+        plt.show()
+        #

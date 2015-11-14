@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from qrs import qrs
 import ConfigParser, os
+import numpy as np
 
 if __name__ == '__main__':
     conf = ConfigParser.ConfigParser()
@@ -19,7 +20,7 @@ if __name__ == '__main__':
     query = "SELECT hollande.chomage - sarkozy.chomage FROM ( SELECT bf.nb_chomeur - af.nb_chomeur AS chomage FROM ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s ) AS bf, ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s - INTERVAL %s MONTH ) AS af ) AS hollande, ( SELECT bf.nb_chomeur - af.nb_chomeur AS chomage FROM ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s - INTERVAL %s MONTH ) AS bf, ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s - INTERVAL %s MONTH ) AS af ) AS sarkozy;"
     obj.setQuery(query)
 
-    times = ['2008-01-01', '2015-08-01'] #TODO
+    times = ['2008-01-01', '2015-08-01']
     widths = [30]
     durations = range(30,36)  # or range(15, 61) TO TEST less than 30
     obj.setParametersInterval(times, widths, durations)
@@ -27,15 +28,38 @@ if __name__ == '__main__':
     obj.setSigmaValues(3, 1, 10)
     
     results = obj.executeQuery() #results is a tuple with 4 params
+    matrix_sr=[0]*len(durations)  #init
+    matrix_sp=[0]*len(durations)  #init
+    #we  construct our matrix column by column
+    
 
+    old_t = results[0][0]
+    column_sr = []
+    column_sp = []
     for result in results:
         t = result[0]
         w = result[1]
         d = result[2]
         r = result[3]
+        if str(t) != str(old_t):
+            matrix_sr = np.column_stack((matrix_sr,column_sr+[0]*(len(durations)-len(column_sr))))
+            matrix_sp = np.column_stack((matrix_sp,column_sp+[0]*(len(durations)-len(column_sp))))
+            column_sr = []
+            column_sp = []
+        old_t = t
         score_sr = obj.computeSrScore(r)
+        column_sr.append(score_sr)
         score_sp = obj.computeSpScore(w, d, t)
-        print("t:", t, "w:", w, "d:", d, "r:", r, "score_sr:", score_sr, "score_sp:", score_sp)
+        column_sp.append(score_sp)
+
+        #print("t:", t, "w:", w, "d:", d, "r:", r, "score_sr:", score_sr, "score_sp:", score_sp)
+    matrix_sr = np.column_stack((matrix_sr,column_sr+[0]*(len(durations)-len(column_sr))))
+    matrix_sp = np.column_stack((matrix_sp,column_sp+[0]*(len(durations)-len(column_sp))))
+    matrix_sr = np.delete(matrix_sr, 0, 1) #we delete initialized row
+    matrix_sp = np.delete(matrix_sp, 0, 1) # we delete initialized row
 
     obj.closeDb()
+    
+    #obj.displaySr(times, matrix_sr)
+    obj.displaySp(times, matrix_sp)
 
