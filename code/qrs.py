@@ -50,6 +50,9 @@ class qrs:
     def setDbTableName(self,tablename):
         self.db_table_name = tablename
 
+    """ t: end date of the second period
+        w: lenght of periods
+        t: distance between the end of each period"""
     def setParametersInterval(self, t, w, d):
         self.t_interval = t
         self.w_interval = w
