@@ -2,28 +2,41 @@ import MySQLdb
 import math
 import Queue
 
+# QRS stands for Query Response Surface modelize a claim and is consituted by a parametrized database query
+# a set of para
 class qrs:
     """Query Response Surface"""
     def __init__(self, t0, w0, d0, r0, claim_type):
-        self.t0 = t0
-        self.w0 = w0
-        self.d0 = d0
-        self.r0 = r0
         self.db = None
         self.db_name = None
         self.db_cursor = None
         self.db_table_name = None
-        self.q = None
+
+        """No parameter interval specified"""
         self.t_interval = None
         self.w_interval = None
         self.d_interval = None
+
+        """No relevance parameters specified"""
+        self.sigma_w = None # for SP_rel
+        self.sigma_d = None # for SP_rel
+        self.sigma_t = None # for SP_rel
+
+        """Initialization with parameters of the original claim"""
+        self.t0 = t0
+        self.w0 = w0
+        self.d0 = d0
+        self.r0 = r0
+
+        """No query specified"""
+        self.q = None
+
         self.claim_type = claim_type
         self.all_possible_parameters = Queue.Queue()
         self.backup_parameters = Queue.Queue()
-        self.sigma_w = None # pour SP_rel
-        self.sigma_d = None # pour SP_rel
-        self.sigma_t = None # pour SP_rel
-        self.naturalness_levels = [] # a list
+
+        """No naturalness levels specified"""
+        self.naturalness_levels = []
 
     def connectToDb(self, host, username, passwd, dbname):
         self.db_name = dbname
@@ -47,10 +60,11 @@ class qrs:
                 for d in self.d_interval:
                     year = t
                     sarkozy_beginning_time = 2007
-                    if "-" in t: # if date is kind of (2013-04-15)
-                        ds = t.split("-")
-                        year = int(ds[0])+int(ds[1])/float(12)
-                        sarkozy_beginning_time = 2007+5/float(12)
+                    if '-' in t:
+                    # The date format is YYYY-MM-DD
+                        ds = t.split('-')
+                        year = int(ds[0]) + int(ds[1]) / float(12)
+                        sarkozy_beginning_time = 2007 + 5 / float(12)
 
                     # we have a constraint: t-w-d > 2007 [sarkozy's beginning period]
                     if year - w/float(12) - d/float(12) > sarkozy_beginning_time:
@@ -69,23 +83,20 @@ class qrs:
 
     def getP(self):
         if not self.all_possible_parameters.empty():
-	        param = self.all_possible_parameters.get()
-	        self.backup_parameters.put(param)
-	        return param
+            param = self.all_possible_parameters.get()
+            self.backup_parameters.put(param)
+            return param
 
-	    # pour que les parametres soient pretes a la prochaine requete
-	    # on recharge la queue self.all_possible_parameters
+        # pour que les parametres soient pretes a la prochaine requete
+        # on recharge la queue self.all_possible_parameters
         while not self.backup_parameters.empty():
             self.all_possible_parameters.put(self.backup_parameters.get())
         return -1 # empty
 
     def executeQuery(self):
         results = []
-        values = 0 #juste pour demarer la boucle while
-        while True:
-            values = self.getP()
-            if values == -1:
-                break
+        values = self.getP()
+        while values != -1:
             t = values[0]
             w = values[1]
             d = values[2]
@@ -97,12 +108,13 @@ class qrs:
             rows = self.db_cursor.fetchall()
             for row in rows:
                 results.append((t, w, d, row[0]))
+            values = self.getP()
         return results
 
     def computeSpScore(self, w, d, t):
         """ SP = SP_nat * SP_rel 
-	    SP_nat = SP_nat_w * SP_nat_d
-	    SP_rel = SP_rel_w * SP_rel_d * SP_rel_t """
+        SP_nat = SP_nat_w * SP_nat_d
+        SP_rel = SP_rel_w * SP_rel_d * SP_rel_t """
 
         """ 
         naturalness level = (chi_l, pi_l)

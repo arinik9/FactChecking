@@ -25,9 +25,9 @@ if __name__ == '__main__':
         w = result[1]
         d = result[2]
         r = result[3]
-	score_sr = obj.computeSrScore(r)
-	score_sp = obj.computeSpScore(w, d, t)
-	print("t:", t, "w:", w, "d:", d, "r:", r, "score_sr:", score_sr, "score_sp:", score_sp)
+        score_sr = obj.computeSrScore(r)
+        score_sp = obj.computeSpScore(w, d, t)
+        print("t:", t, "w:", w, "d:", d, "r:", r, "score_sr:", score_sr, "score_sp:", score_sp)
 
     obj.closeDb()
 

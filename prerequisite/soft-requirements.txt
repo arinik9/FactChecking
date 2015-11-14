@@ -1,0 +1,8 @@
+python2
+mysql-python
+
+## Debian/Ubuntu
+#apt-get install python-mysqldb
+
+## Arch
+#pacman -S mysql-python
