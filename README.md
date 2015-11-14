@@ -1,7 +1,7 @@
 # FactChecking
 Le sujet du projet spécifique à l'INSA en 2015-2015 pendant le 1er semestre
 
-La page Google Doc correspodante: [Doc](https://docs.google.com/document/d/1st0c-jgniiC2DMktNm5dBwBV52JOhaGyjfpp0Zl60hU/edit)
+La page Google Doc correspodante: [Doc](https://docs.google.com/document/d/1st0c-jgniiC2DMktNm5dBwBV52JOhaGyjfpp0Zl60hU)
 
 Données de base:
 

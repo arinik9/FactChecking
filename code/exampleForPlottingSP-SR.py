@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #source: http://stackoverflow.com/questions/18897885/qualitative-heatmap-plot-python
-
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,3 +15,4 @@ plt.jet()
 plt.colorbar()
 
 plt.show()
+time.sleep(1)
