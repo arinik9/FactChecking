@@ -4,6 +4,9 @@ import Queue
 from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.pyplot import figure
 
 def sub_month(month, date):
     for i in range(month):
@@ -164,17 +167,52 @@ class qrs:
             return r/float(self.r0) - 1
         return self.r0/float(r) - 1
 
-    def displaySr(self, x, matrix_sr):
+
+    def displaySr(self, x, y, matrix_sr):
+        #interesting source: http://stackoverflow.com/questions/15908371/matplotlib-colorbars-and-its-text-labels
+        #same: http://stackoverflow.com/questions/14336138/python-matplotlib-change-color-of-specified-value-in-contourf-plot-using-colorma
+        #same: http://stackoverflow.com/questions/14391959/heatmap-in-matplotlib-with-pcolor
+        
         #greener colors strengthen the claim
         #redder colors weaken the claim
-        #print(matrix_sr)
-        plt.imshow(matrix_sr, interpolation='none',
-                aspect=matrix_sr.shape[1]/matrix_sr.shape[0])
 
-        plt.xticks(range(len(x)), x)
-        plt.jet()
-        plt.colorbar()
+        #we do not want to display nan values. So we mask nan values
+        #there is nan values because some parameter combinations are not valid
+        masked_array = np.ma.array (matrix_sr, mask=np.isnan(matrix_sr))
+        #We could do our colormap with discrete (listed) colors but LinearSegmentedColormap is better 
+        #cMap = ListedColormap(['#FE2E2E', '#FE642E', '#FE9A2E', '#FACC2E', '#FFFF00', '#F3F781', '#C8FE2E', '#00FF00', '#01DF01'])
 
+        colors = [(plt.cm.jet(i)) for i in xrange(230,130,-1)]
+        #plt.cm.jet() has 256 different colors. 
+        #We will focus on xrange(130,230) in descending order
+        #because we want that redder colors matches poor values
+        #and greener colors maches high values
+
+        cMap = LinearSegmentedColormap.from_list('cMap', colors,
+                N=101) #N=230-130+1=101
+        cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
+        fig, ax = plt.subplots()
+        #fig, ax = plt.subplots(1,1, figsize=(6,6))
+        #heatmap = ax.pcolor(masked_array, cmap=cMap)
+        heatmap = ax.pcolormesh(masked_array, cmap=cMap)
+        ax.set_xticks(range(len(x)))
+        ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
+        ax.tick_params(axis='x', labelsize=8)
+        ax.set_yticks(range(len(y)))
+        ax.set_yticklabels(map(lambda i: str(i), y))
+        plt.autoscale()
+        ax.grid(False)
+
+        fig.suptitle('Strength Result')
+
+        #we limit colormap values. we force max_limit to 0.4 in case of no existence of positive values
+        #because positive values should match greener colors
+        max_limit = max(map(lambda i: max(i), masked_array))
+        min_limit = min(map(lambda i: min(i), masked_array))
+        if max_limit <0:
+            max_limit=0.40
+        heatmap.set_clim(vmin=min_limit, vmax=max_limit)
+        plt.colorbar(heatmap)
         plt.show()
 
     def displaySp(self, x, matrix_sp):

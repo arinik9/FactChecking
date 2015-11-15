@@ -28,8 +28,8 @@ if __name__ == '__main__':
     obj.setSigmaValues(3, 1, 10)
     
     results = obj.executeQuery() #results is a tuple with 4 params
-    matrix_sr=[0]*len(durations)  #init
-    matrix_sp=[0]*len(durations)  #init
+    matrix_sr=[np.nan]*len(durations)  #init
+    matrix_sp=[np.nan]*len(durations)  #init
     #we  construct our matrix column by column
     
 
@@ -42,8 +42,8 @@ if __name__ == '__main__':
         d = result[2]
         r = result[3]
         if str(t) != str(old_t):
-            matrix_sr = np.column_stack((matrix_sr,column_sr+[0]*(len(durations)-len(column_sr))))
-            matrix_sp = np.column_stack((matrix_sp,column_sp+[0]*(len(durations)-len(column_sp))))
+            matrix_sr = np.column_stack((matrix_sr,column_sr+[np.nan]*(len(durations)-len(column_sr))))
+            matrix_sp = np.column_stack((matrix_sp,column_sp+[np.nan]*(len(durations)-len(column_sp))))
             column_sr = []
             column_sp = []
         old_t = t
@@ -53,13 +53,13 @@ if __name__ == '__main__':
         column_sp.append(score_sp)
 
         #print("t:", t, "w:", w, "d:", d, "r:", r, "score_sr:", score_sr, "score_sp:", score_sp)
-    matrix_sr = np.column_stack((matrix_sr,column_sr+[0]*(len(durations)-len(column_sr))))
-    matrix_sp = np.column_stack((matrix_sp,column_sp+[0]*(len(durations)-len(column_sp))))
+    matrix_sr = np.column_stack((matrix_sr,column_sr+[np.nan]*(len(durations)-len(column_sr))))
+    matrix_sp = np.column_stack((matrix_sp,column_sp+[np.nan]*(len(durations)-len(column_sp))))
     matrix_sr = np.delete(matrix_sr, 0, 1) #we delete initialized row
     matrix_sp = np.delete(matrix_sp, 0, 1) # we delete initialized row
 
     obj.closeDb()
     
-    #obj.displaySr(times, matrix_sr)
-    obj.displaySp(times, matrix_sp)
+    obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
+    #obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
 
