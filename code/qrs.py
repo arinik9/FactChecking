@@ -245,7 +245,7 @@ class qrs:
         plt.autoscale()
         ax.grid(False)
 
-        fig.suptitle('Strength Result')
+        fig.suptitle('Sensibility of Parameter')
 
         #we limit colormap values. we force min_limit to -1 in case of no existence of negative values
         #because positive values should match greener colors
