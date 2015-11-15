@@ -215,15 +215,46 @@ class qrs:
         plt.colorbar(heatmap)
         plt.show()
 
-    def displaySp(self, x, matrix_sp):
+    def displaySp(self, x, y, matrix_sp):
         # darker colors indicates higher sensibility
-        #print(matrix_sp)
-        plt.imshow(matrix_sp, interpolation='none',
-                aspect=matrix_sp.shape[1]/matrix_sp.shape[0])
 
-        plt.xticks(range(len(x)), x)
-        plt.jet()
-        plt.colorbar()
+        #we do not want to display nan values. So we mask nan values
+        #there is nan values because some parameter combinations are not valid
+        masked_array = np.ma.array (matrix_sp, mask=np.isnan(matrix_sp))
+        #We could do our colormap with discrete (listed) colors but LinearSegmentedColormap is better 
+        #cMap = ListedColormap(['#FE2E2E', '#FE642E', '#FE9A2E', '#FACC2E', '#FFFF00', '#F3F781', '#C8FE2E', '#00FF00', '#01DF01'])
 
+        colors = [(plt.cm.jet(i)) for i in xrange(172,0,-1)]
+        #plt.cm.jet() has 256 different colors. 
+        #We will focus on xrange(172,0) in descending order
+        #because we want that darker colors matches high values
+        #and greener/yellower colors maches poor values
+
+        cMap = LinearSegmentedColormap.from_list('cMap', colors,
+                N=173) #N=172-0+1=173
+        cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
+        fig, ax = plt.subplots()
+        #fig, ax = plt.subplots(1,1, figsize=(6,6))
+        #heatmap = ax.pcolor(masked_array, cmap=cMap)
+        heatmap = ax.pcolormesh(masked_array, cmap=cMap)
+        ax.set_xticks(range(len(x)))
+        ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
+        ax.tick_params(axis='x', labelsize=8)
+        ax.set_yticks(range(len(y)))
+        ax.set_yticklabels(map(lambda i: str(i), y))
+        plt.autoscale()
+        ax.grid(False)
+
+        fig.suptitle('Strength Result')
+
+        #we limit colormap values. we force min_limit to -1 in case of no existence of negative values
+        #because positive values should match greener colors
+        max_limit = max(map(lambda i: max(i), masked_array))
+        min_limit = min(map(lambda i: min(i), masked_array))
+        if max_limit <0:
+            max_limit=0.40
+        if min_limit >0:
+            min_limit=-1
+        heatmap.set_clim(vmin=min_limit, vmax=max_limit)
+        plt.colorbar(heatmap)
         plt.show()
-        #
