@@ -15,14 +15,12 @@ if __name__ == '__main__':
         conf.get('DB', 'password'),
         conf.get('DB', 'name')
     )
-    obj.setDbTableName('chomagePE')
-  
-    query = "SELECT hollande.chomage - sarkozy.chomage FROM ( SELECT bf.nb_chomeur - af.nb_chomeur AS chomage FROM ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s ) AS bf, ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s - INTERVAL %s MONTH ) AS af ) AS hollande, ( SELECT bf.nb_chomeur - af.nb_chomeur AS chomage FROM ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s - INTERVAL %s MONTH ) AS bf, ( SELECT nb_chomeur FROM fact_checking.chomagePE WHERE mois = %s - INTERVAL %s MONTH ) AS af ) AS sarkozy;"
-    obj.setQuery(query)
+    obj.setDbTableName("chomagePE")
+    obj.setDbName("fact_checking")
 
     times = ['2008-01-01', '2015-08-01']
     widths = [30]
-    durations = range(30,36)  # or range(15, 61) TO TEST less than 30
+    durations = range(20,70)  # or range(15, 61) TO TEST less than 30
     obj.setParametersInterval(times, widths, durations)
     obj.setNaturalnessLevels([(1,1), (2.71, 60)]) # exponential =~ 2.71
     obj.setSigmaValues(3, 1, 10)

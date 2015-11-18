@@ -22,6 +22,7 @@ class qrs:
         self.db_name = None
         self.db_cursor = None
         self.db_table_name = None
+        self.db_name = None
 
         """No parameter interval specified"""
         self.t_interval = None
@@ -62,6 +63,9 @@ class qrs:
     def setDbTableName(self,tablename):
         self.db_table_name = tablename
 
+    def setDbName(self,db_name):
+        self.db_name = db_name
+
     """ t: end date of the second period
         w: lenght of periods
         t: distance between the end of each period"""
@@ -79,9 +83,9 @@ class qrs:
                     # we have a constraint: t-w-d > 2007 may [sarkozy's beginning period]
                     limit = sub_month( d, sub_month(w, cur_period) )
                     if limit > sarkozy_beginning_time:
-                        self.all_possible_parameters.put((str(cur_period),w,d))
-                        if str(cur_period) not in self.timelist:
-                            self.timelist.append(str(cur_period))
+                        self.all_possible_parameters.put((str(cur_period)[:10],w,d))
+                        if str(cur_period)[:10] not in self.timelist:
+                            self.timelist.append(str(cur_period)[:10])
             cur_period += timedelta(days=32)
             cur_period = cur_period.replace(day=1)
 
@@ -112,15 +116,14 @@ class qrs:
     def executeQuery(self):
         results = []
         values = self.getP()
+        query = "SELECT hollande.chomage - sarkozy.chomage FROM ( SELECT bf.nb_chomeur - af.nb_chomeur AS chomage FROM ( SELECT nb_chomeur FROM "+self.db_name+"."+self.db_table_name+" WHERE mois = %s ) AS bf, ( SELECT nb_chomeur FROM "+self.db_name+"."+self.db_table_name+" WHERE mois = %s - INTERVAL %s MONTH ) AS af ) AS hollande, (SELECT bf.nb_chomeur - af.nb_chomeur AS chomage FROM ( SELECT nb_chomeur FROM "+self.db_name+"."+self.db_table_name+" WHERE mois = %s - INTERVAL %s MONTH) AS bf, ( SELECT nb_chomeur FROM "+self.db_name+"."+self.db_table_name+" WHERE mois = %s - INTERVAL %s MONTH ) AS af ) AS sarkozy;"
+
         while values != -1:
             t = values[0]
             w = values[1]
             d = values[2]
-            """self.db_cursor.execute(self.q, (self.db_name+'.'+self.db_table_name, t, 
-                self.db_name+'.'+self.db_table_name, t, str(w+1), 
-                self.db_name+'.'+self.db_table_name, t, str(d), 
-                self.db_name+'.'+self.db_table_name, t, str(d+w+1)))"""
-            self.db_cursor.execute(self.q, (t, t, str(w+1),  t, str(d), t, str(d+w+1)))
+
+            self.db_cursor.execute(query, (t, t, str(w+1),  t, str(d), t, str(d+w+1)))
             rows = self.db_cursor.fetchall()
             for row in rows:
                 results.append((t, w, d, row[0]))
@@ -245,7 +248,7 @@ class qrs:
         plt.autoscale()
         ax.grid(False)
 
-        fig.suptitle('Sensibility of Parameter')
+        fig.suptitle('Parameter of Sensibility')
 
         #we limit colormap values. we force min_limit to -1 in case of no existence of negative values
         #because positive values should match greener colors
