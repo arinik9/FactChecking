@@ -15,12 +15,12 @@ def sub_month(month, date):
     return date
 
 def fill_params(query, t, w, d):
-    res = ""
+    res = """"""
     i = 0
     while i < len(query):
         if query[i] == '<':
             if query[i+1] == 't':
-                res += t
+                res += '"'+t+'"'
             elif query[i+1] == 'w':
                 res += w
             elif query[i+1] == 'd':
@@ -138,6 +138,7 @@ class qrs:
             t = values[0]
             w = values[1]
             d = values[2]
+            #print(fill_params(query, t, str(w), str(d)) )
             self.db_cursor.execute( fill_params(query, t, str(w), str(d)) )
             rows = self.db_cursor.fetchall()
             for row in rows:
