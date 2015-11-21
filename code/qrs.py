@@ -13,6 +13,23 @@ def sub_month(month, date):
         date -= timedelta(days=1)
         date = date.replace(day=1)
     return date
+
+def fill_params(query, t, w, d):
+    res = ""
+    i = 0
+    while i < len(query):
+        if query[i] == '<':
+            if query[i+1] == 't':
+                res += t
+            elif query[i+1] == 'w':
+                res += w
+            elif query[i+1] == 'd':
+                res += d
+            i += 3
+        else:
+            res += query[i]
+            i += 1
+    return res
 # QRS stands for Query Response Surface modelize a claim and is consituted by a parametrized database query
 # a set of para
 class qrs:
@@ -113,17 +130,15 @@ class qrs:
             self.all_possible_parameters.put(self.backup_parameters.get())
         return -1 # empty
 
-    def executeQuery(self):
+    def executeQuery(self, query):
         results = []
         values = self.getP()
-        query = "SELECT hollande.chomage - sarkozy.chomage FROM ( SELECT bf.nb_chomeur - af.nb_chomeur AS chomage FROM ( SELECT nb_chomeur FROM "+self.db_name+"."+self.db_table_name+" WHERE mois = %s ) AS bf, ( SELECT nb_chomeur FROM "+self.db_name+"."+self.db_table_name+" WHERE mois = %s - INTERVAL %s MONTH ) AS af ) AS hollande, (SELECT bf.nb_chomeur - af.nb_chomeur AS chomage FROM ( SELECT nb_chomeur FROM "+self.db_name+"."+self.db_table_name+" WHERE mois = %s - INTERVAL %s MONTH) AS bf, ( SELECT nb_chomeur FROM "+self.db_name+"."+self.db_table_name+" WHERE mois = %s - INTERVAL %s MONTH ) AS af ) AS sarkozy;"
 
         while values != -1:
             t = values[0]
             w = values[1]
             d = values[2]
-
-            self.db_cursor.execute(query, (t, t, str(w+1),  t, str(d), t, str(d+w+1)))
+            self.db_cursor.execute( fill_params(query, t, str(w), str(d)) )
             rows = self.db_cursor.fetchall()
             for row in rows:
                 results.append((t, w, d, row[0]))
