@@ -20,7 +20,10 @@ def fill_params(query, t, w, d):
     while i < len(query):
         if query[i] == '<':
             if query[i+1] == 't':
-                res += '"'+t+'"'
+                if type(t) == type(str()):
+                    res += '"' + t + '"'
+                else:
+                    res += str(t)
             elif query[i+1] == 'w':
                 res += w
             elif query[i+1] == 'd':
@@ -90,22 +93,35 @@ class qrs:
         self.t_interval = t
         self.w_interval = w
         self.d_interval = d
-        cur_period = datetime.strptime(self.t_interval[0], "%Y-%m-%d")
-        last_period = datetime.strptime(self.t_interval[1], "%Y-%m-%d")
-        sarkozy_beginning_time = datetime.strptime("2007-05-01", "%Y-%m-%d")
+        if type(t[0]) == type(str()):
+            cur_period = datetime.strptime(self.t_interval[0], "%Y-%m-%d")
+            last_period = datetime.strptime(self.t_interval[1], "%Y-%m-%d")
+        else:
+            cur_period = self.t_interval[0]
+            last_period = self.t_interval[1]
+            
+        #sarkozy_beginning_time = datetime.strptime("2007-05-01", "%Y-%m-%d")
 
         while cur_period <= last_period:
             for w in self.w_interval:
                 for d in self.d_interval:
                     # we have a constraint: t-w-d > 2007 may [sarkozy's beginning period]
-                    limit = sub_month( d, sub_month(w, cur_period) )
-                    if limit > sarkozy_beginning_time:
-                        self.all_possible_parameters.put((str(cur_period)[:10],w,d))
+                    # limit = sub_month( d, sub_month(w, cur_period) )
+                    # if limit > sarkozy_beginning_time:
+                    if type(t[0]) == type(str()):
+                        self.all_possible_parameters.put( [str(cur_period)[:10], w, d] )
                         if str(cur_period)[:10] not in self.timelist:
                             self.timelist.append(str(cur_period)[:10])
-            cur_period += timedelta(days=32)
-            cur_period = cur_period.replace(day=1)
-
+                    else:
+                        self.all_possible_parameters.put( [cur_period, w, d] )
+                        if cur_period not in self.timelist:
+                            self.timelist.append(cur_period)
+            if type(t[0]) == type(str()):
+                # Add one month
+                cur_period += timedelta(days=32)
+                cur_period = cur_period.replace(day=1)
+            else:
+                cur_period += 1
 
     def setQuery(self, q):
         self.q = q
@@ -142,7 +158,8 @@ class qrs:
             self.db_cursor.execute( fill_params(query, t, str(w), str(d)) )
             rows = self.db_cursor.fetchall()
             for row in rows:
-                results.append((t, w, d, row[0]))
+                if row[0] is not None:
+                    results.append((t, w, d, float(str(row[0]))))
             values = self.getP()
         return results
 
@@ -165,7 +182,7 @@ class qrs:
         sp_rel_d = math.exp(-math.pow(((int(d)-int(self.d0))/float(self.sigma_d)), 2))
 
         diff = 0
-        if "-" in t and "-" in self.t0:
+        if type(self.t0) == type(str()):
             # t1 and self.t0 are type of datetime like (2013-07-16)
             t1=t.split("-")
             t2=self.t0.split("-")
@@ -173,7 +190,7 @@ class qrs:
             diff = diff + (int(t2[0])-int(t1[0]))
             diff = diff + (int(t2[1])-int(t1[1]))/float(12) #conversion from month to year
         else:
-            diff = int(t)-int(self.t0)
+            diff = t - self.t0
         sp_rel_t = math.exp(-math.pow((diff)/float(self.sigma_t), 2))
         sp_rel = sp_rel_w * sp_rel_d * sp_rel_t
 
@@ -183,8 +200,8 @@ class qrs:
         """ SR = r/r0 - 1 for increasing rate
             SR = r0/r - 1 for decreasing rate"""
         if self.claim_type == "increasing":
-            return r/float(self.r0) - 1
-        return self.r0/float(r) - 1
+            return float(r)/float(self.r0) - 1
+        return float(self.r0)/float(r) - 1
 
 
     def displaySr(self, x, y, matrix_sr):
