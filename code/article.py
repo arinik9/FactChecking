@@ -66,6 +66,6 @@ if __name__ == '__main__':
 
     obj.closeDb()
     
-    obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
-    #obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
+    #obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
+    obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
 

@@ -203,7 +203,6 @@ class qrs:
             return float(r)/float(self.r0) - 1
         return float(self.r0)/float(r) - 1
 
-
     def displaySr(self, x, y, matrix_sr):
         #interesting source: http://stackoverflow.com/questions/15908371/matplotlib-colorbars-and-its-text-labels
         #same: http://stackoverflow.com/questions/14336138/python-matplotlib-change-color-of-specified-value-in-contourf-plot-using-colorma
@@ -218,15 +217,25 @@ class qrs:
         #We could do our colormap with discrete (listed) colors but LinearSegmentedColormap is better 
         #cMap = ListedColormap(['#FE2E2E', '#FE642E', '#FE9A2E', '#FACC2E', '#FFFF00', '#F3F781', '#C8FE2E', '#00FF00', '#01DF01'])
 
-        colors = [(plt.cm.jet(i)) for i in xrange(230,130,-1)]
+        #colors = [(plt.cm.jet(i)) for i in xrange(230,130,-1)]
         #plt.cm.jet() has 256 different colors. 
         #We will focus on xrange(130,230) in descending order
         #because we want that redder colors matches poor values
         #and greener colors maches high values
 
-        cMap = LinearSegmentedColormap.from_list('cMap', colors,
-                N=101) #N=230-130+1=101
-        cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
+        cMap = LinearSegmentedColormap("cMap", {'red':   [(0.0,  0.0, 0.0),
+                                                           (0.5,  1.0, 1.0),
+                                                           (1.0,  1.0, 1.0)],
+
+                                                'green': [(0.0,  0.0, 0.0),
+                                                           (0.25, 0.0, 0.0),
+                                                           (0.75, 1.0, 1.0),
+                                                           (1.0,  1.0, 1.0)],
+
+                                                'blue':  [(0.0,  0.0, 0.0),
+                                                           (0.5,  0.0, 0.0),
+                                                           (1.0,  1.0, 1.0)]})
+        #cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
         fig, ax = plt.subplots()
         #fig, ax = plt.subplots(1,1, figsize=(6,6))
         #heatmap = ax.pcolor(masked_array, cmap=cMap)
@@ -269,8 +278,19 @@ class qrs:
         #because we want that darker colors matches high values
         #and greener/yellower colors maches poor values
 
-        cMap = LinearSegmentedColormap.from_list('cMap', colors,
-                N=173) #N=172-0+1=173
+        
+        cMap = LinearSegmentedColormap("cMap", {'red':   [(0.0,  0.0, 0.0),
+                                                           (0.5,  1.0, 1.0),
+                                                           (1.0,  1.0, 1.0)],
+
+                                                'green': [(0.0,  0.0, 0.0),
+                                                           (0.25, 0.0, 0.0),
+                                                           (0.75, 1.0, 1.0),
+                                                           (1.0,  1.0, 1.0)],
+
+                                                'blue':  [(0.0,  0.0, 0.0),
+                                                           (0.5,  0.0, 0.0),
+                                                           (1.0,  1.0, 1.0)]})
         cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
         fig, ax = plt.subplots()
         #fig, ax = plt.subplots(1,1, figsize=(6,6))
