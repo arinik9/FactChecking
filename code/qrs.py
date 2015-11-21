@@ -232,7 +232,10 @@ class qrs:
         #heatmap = ax.pcolor(masked_array, cmap=cMap)
         heatmap = ax.pcolormesh(masked_array, cmap=cMap)
         ax.set_xticks(range(len(x)))
-        ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
+        if type(self.t_interval[0]) == type(str):
+            ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
+        else:
+            ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
         ax.tick_params(axis='x', labelsize=8)
         ax.set_yticks(range(len(y)))
         ax.set_yticklabels(map(lambda i: str(i), y))
@@ -274,7 +277,10 @@ class qrs:
         #heatmap = ax.pcolor(masked_array, cmap=cMap)
         heatmap = ax.pcolormesh(masked_array, cmap=cMap)
         ax.set_xticks(range(len(x)))
-        ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
+        if type(self.t_interval[0]) == type(str):
+            ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
+        else:
+            ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
         ax.tick_params(axis='x', labelsize=8)
         ax.set_yticks(range(len(y)))
         ax.set_yticklabels(map(lambda i: str(i), y))

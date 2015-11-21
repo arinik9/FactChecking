@@ -6,7 +6,7 @@ import numpy as np
 if __name__ == '__main__':
 # Configuration
     conf = ConfigParser.ConfigParser()
-    obj = qrs('2014-10-01', 30, 30, 310900, 'increasing')
+    obj = qrs(2001, 6, 6, 0.05, 'increasing')
     conf_path = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + "/../db-config.ini"
 
     conf.read(conf_path)
@@ -16,30 +16,24 @@ if __name__ == '__main__':
         conf.get('DB', 'password'),
         conf.get('DB', 'name')
     )
-    obj.setDbTableName("chomagePE")
     obj.setDbName("fact_checking")
-    db_name = "fact_checking"
-    table_name = "chomagePE"
+    obj.setDbTableName("nyc_adoptions")
+
 # Parameters
-    query = """SELECT hollande.chomage - sarkozy.chomage
-               FROM (SELECT bf.nb_chomeur - af.nb_chomeur AS chomage
-                     FROM (SELECT nb_chomeur FROM fact_checking.chomagePE
-                           WHERE mois = <t> ) AS bf,
-                          (SELECT nb_chomeur FROM fact_checking.chomagePE
-                           WHERE mois = <t> - INTERVAL <w> + 1 MONTH ) AS af ) AS hollande,
-                          (SELECT bf.nb_chomeur - af.nb_chomeur AS chomage
-                           FROM (SELECT nb_chomeur FROM fact_checking.chomagePE
-                                 WHERE mois = <t> - INTERVAL <d> MONTH) AS bf,
-                                (SELECT nb_chomeur FROM fact_checking.chomagePE
-                                 WHERE mois = <t> - INTERVAL <d> + <w> + 1 MONTH ) AS af ) AS sarkozy;"""
-    times = ['2011-01-01', '2014-08-01']
-    widths = [30]
-    durations = range(20,70)  # or range(15, 61) TO TEST less than 30
+    query = """SELECT af.total / bf.total
+               FROM (SELECT SUM(adoptions) AS total FROM fact_checking.nyc_adoptions
+                     WHERE year BETWEEN <t> - <w> - <d> + 1 and <t> - <d>) AS bf,
+                    (SELECT  SUM(adoptions) AS total FROM fact_checking.nyc_adoptions
+                     WHERE year BETWEEN <t> - <w> + 1 AND <t>) AS af;"""
+    times = [1995, 2012]
+    widths = [6]
+    durations = range(1,19)  # or range(15, 61) TO TEST less than 30
     obj.setParametersInterval(times, widths, durations)
-    obj.setNaturalnessLevels([(1,1), (2.71, 60)]) # exponential =~ 2.71
-    obj.setSigmaValues(3, 1, 10)
+    obj.setNaturalnessLevels([(1,1), (2.71, 4), (7.39, 8)]) # exponential =~ 2.71
+    obj.setSigmaValues(5, 1, 10)
     
     results = obj.executeQuery(query) #results is a tuple with 4 params
+    print(results)
     matrix_sr=[np.nan]*len(durations)  #init
     matrix_sp=[np.nan]*len(durations)  #init
     #we  construct our matrix column by column
@@ -72,6 +66,6 @@ if __name__ == '__main__':
 
     obj.closeDb()
     
-    #obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
-    obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
+    obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
+    #obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
 
