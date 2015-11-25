@@ -37,7 +37,7 @@ def fill_params(query, t, w, d):
 # a set of para
 class qrs:
     """Query Response Surface"""
-    def __init__(self, t0, w0, d0, r0, claim_type):
+    def __init__(self, t0, w0, d0, r0, claim_type, min_time, max_time):
         self.db = None
         self.db_name = None
         self.db_cursor = None
@@ -64,6 +64,8 @@ class qrs:
         self.q = None
 
         self.claim_type = claim_type
+        self.min_time = min_time
+        self.max_time = max_time
         self.all_possible_parameters = Queue.Queue()
         self.backup_parameters = Queue.Queue()
 
@@ -105,7 +107,6 @@ class qrs:
         while cur_period <= last_period:
             for w in self.w_interval:
                 for d in self.d_interval:
-                    # we have a constraint: t-w-d > 2007 may [sarkozy's beginning period]
                     # limit = sub_month( d, sub_month(w, cur_period) )
                     # if limit > sarkozy_beginning_time:
                     if type(t[0]) == type(str()):
@@ -113,9 +114,11 @@ class qrs:
                         if str(cur_period)[:10] not in self.timelist:
                             self.timelist.append(str(cur_period)[:10])
                     else:
-                        self.all_possible_parameters.put( [cur_period, w, d] )
-                        if cur_period not in self.timelist:
-                            self.timelist.append(cur_period)
+                        # Constraint t-w-d > min_time
+                        if cur_period-w-d > self.min_time:
+                            self.all_possible_parameters.put( [cur_period, w, d] )
+                            if cur_period not in self.timelist:
+                                self.timelist.append(cur_period)
             if type(t[0]) == type(str()):
                 # Add one month
                 cur_period += timedelta(days=32)

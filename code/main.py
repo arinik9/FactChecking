@@ -4,7 +4,8 @@ import ConfigParser, os
 import numpy as np
 
 if __name__ == '__main__':
-# Configuration
+################################################################################
+# Set configuration
     conf = ConfigParser.ConfigParser()
     obj = qrs('2014-10-01', 30, 30, 310900, 'increasing')
     conf_path = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + "/../db-config.ini"
@@ -20,7 +21,9 @@ if __name__ == '__main__':
     obj.setDbName("fact_checking")
     db_name = "fact_checking"
     table_name = "chomagePE"
-# Parameters
+
+################################################################################
+# Set parameters
     query = """SELECT hollande.chomage - sarkozy.chomage
                FROM (SELECT bf.nb_chomeur - af.nb_chomeur AS chomage
                      FROM (SELECT nb_chomeur FROM fact_checking.chomagePE
@@ -34,12 +37,15 @@ if __name__ == '__main__':
                                  WHERE mois = <t> - INTERVAL <d> + <w> + 1 MONTH ) AS af ) AS sarkozy;"""
     times = ['2011-01-01', '2014-08-01']
     widths = [30]
-    durations = range(20,70)  # or range(15, 61) TO TEST less than 30
+    durations = range(20,70)
     obj.setParametersInterval(times, widths, durations)
     obj.setNaturalnessLevels([(1,1), (2.71, 60)]) # exponential =~ 2.71
     obj.setSigmaValues(3, 1, 10)
-    
-    results = obj.executeQuery(query) #results is a tuple with 4 params
+
+################################################################################
+# Compute Results
+    results = obj.executeQuery(query)
+
     matrix_sr=[np.nan]*len(durations)  #init
     matrix_sp=[np.nan]*len(durations)  #init
     #we  construct our matrix column by column
