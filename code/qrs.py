@@ -280,16 +280,15 @@ class qrs:
         #and greener/yellower colors maches poor values
 
         
-        cMap = LinearSegmentedColormap("cMap", {'red':   [(0.0,  1.0, 1.0),
-                                                           (0.5,  0.5, 0.5),
-                                                           (1.0,  0.0, 0.0)],
+        cMap = LinearSegmentedColormap("cMap", {'red':   [(0.0,  0.0, 0.0),
+                                                           (1.0,  0.5, 0.5)],
 
                                                 'green': [(0.0,  0.0, 0.0),
                                                            (0.5, 0.5, 0.5),
                                                            (1.0,  1.0, 1.0)],
 
                                                 'blue':  [(0.0,  0.0, 0.0),
-                                                           (1.0,  0.0, 0.0)]})
+                                                           (1.0,  0.5, 0.5)]})
         cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
         fig, ax = plt.subplots()
         #fig, ax = plt.subplots(1,1, figsize=(6,6))

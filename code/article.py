@@ -78,10 +78,10 @@ if __name__ == '__main__':
     matrix_sp = np.column_stack((matrix_sp,column_sp+[np.nan]*(len(durations)-len(column_sp))))
     matrix_sr = np.delete(matrix_sr, 0, 1) #we delete initialized row
     matrix_sp = np.delete(matrix_sp, 0, 1) # we delete initialized row
-    print(matrix_sr)
+    #print(matrix_sr)
 
     obj.closeDb()
     
-    obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
-    #obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
+    #obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
+    obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
 
