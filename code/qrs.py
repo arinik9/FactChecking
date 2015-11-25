@@ -114,8 +114,8 @@ class qrs:
                         if str(cur_period)[:10] not in self.timelist:
                             self.timelist.append(str(cur_period)[:10])
                     else:
-                        # Constraint t-w-d > min_time
-                        if cur_period-w-d > self.min_time:
+                        # Constraint t-w-d >= min_time
+                        if cur_period-w-d >= self.min_time:
                             self.all_possible_parameters.put( [cur_period, w, d] )
                             if cur_period not in self.timelist:
                                 self.timelist.append(cur_period)
