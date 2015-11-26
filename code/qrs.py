@@ -90,7 +90,7 @@ class qrs:
 
     """ t: end date of the second period
         w: lenght of periods
-        t: distance between the end of each period"""
+        d: distance between the end of each period"""
     def setParametersInterval(self, t, w, d):
         self.t_interval = t
         self.w_interval = w
@@ -98,6 +98,7 @@ class qrs:
         if type(t[0]) == type(str()):
             cur_period = datetime.strptime(self.t_interval[0], "%Y-%m-%d")
             last_period = datetime.strptime(self.t_interval[1], "%Y-%m-%d")
+            min_t = sub_month( 1, datetime.strptime(self.min_time, "%Y-%m-%d") )
         else:
             cur_period = self.t_interval[0]
             last_period = self.t_interval[1]
@@ -110,9 +111,10 @@ class qrs:
                     # limit = sub_month( d, sub_month(w, cur_period) )
                     # if limit > sarkozy_beginning_time:
                     if type(t[0]) == type(str()):
-                        self.all_possible_parameters.put( [str(cur_period)[:10], w, d] )
-                        if str(cur_period)[:10] not in self.timelist:
-                            self.timelist.append(str(cur_period)[:10])
+                        if sub_month( w, sub_month(d, cur_period) ) >= min_t:
+                            self.all_possible_parameters.put( [str(cur_period)[:10], w, d] )
+                            if str(cur_period)[:10] not in self.timelist:
+                                self.timelist.append(str(cur_period)[:10])
                     else:
                         # Constraint t-w-d >= min_time
                         if cur_period-w-d >= self.min_time - 1:
@@ -184,14 +186,12 @@ class qrs:
         sp_rel_w = math.exp( -(float(w-self.w0) / float(self.sigma_w))**2 )
         sp_rel_d = math.exp( -(float(d-self.d0) / float(self.sigma_d))**2 )
 
-        diff = 0
         if type(self.t0) == type(str()):
             # t1 and self.t0 are type of datetime like (2013-07-16)
             t1=t.split("-")
             t2=self.t0.split("-")
             # substract 2 date (only year and month part)
-            diff = diff + (int(t2[0])-int(t1[0]))
-            diff = diff + (int(t2[1])-int(t1[1]))/float(12) #conversion from month to year
+            diff = int(t2[0]) - int(t1[0]) + ( int(t2[1]) - int(t1[1]) ) / 12.0
         else:
             diff = t - self.t0
         sp_rel_t = math.exp( -((diff / float(self.sigma_t))**2) )
@@ -209,7 +209,8 @@ class qrs:
     def exclude_p(self, results):
         minSP = self.computeSpScore(results[0][1], results[0][2], results[0][0])
         cur_id = 0
-        for i in range(1, len(results)):
+        i = 1
+        while i < len(results):
             cur_sp = self.computeSpScore(results[i][1], results[i][2], results[i][0])
             if minSP > cur_sp:
                 results.pop(cur_id)
@@ -217,6 +218,7 @@ class qrs:
                 minSP = cur_sp
             elif minSP < cur_sp:
                 results.pop(i)
+            i += 1
         return results
 
     def CA_tr(self, tr, query):
