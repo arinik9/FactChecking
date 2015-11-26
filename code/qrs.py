@@ -115,7 +115,7 @@ class qrs:
                             self.timelist.append(str(cur_period)[:10])
                     else:
                         # Constraint t-w-d >= min_time
-                        if cur_period-w-d >= self.min_time:
+                        if cur_period-w-d >= self.min_time - 1:
                             self.all_possible_parameters.put( [cur_period, w, d] )
                             if cur_period not in self.timelist:
                                 self.timelist.append(cur_period)
@@ -181,8 +181,8 @@ class qrs:
         sp_nat_d = max(map(lambda x: x[0] if x[1] % d == 0 else -1, self.naturalness_levels))
         sp_nat = sp_nat_w * sp_nat_d
 
-        sp_rel_w = math.exp(-math.pow(((int(w)-int(self.w0))/float(self.sigma_w)),2))
-        sp_rel_d = math.exp(-math.pow(((int(d)-int(self.d0))/float(self.sigma_d)), 2))
+        sp_rel_w = math.exp( -(float(w-self.w0) / float(self.sigma_w))**2 )
+        sp_rel_d = math.exp( -(float(d-self.d0) / float(self.sigma_d))**2 )
 
         diff = 0
         if type(self.t0) == type(str()):
@@ -194,7 +194,7 @@ class qrs:
             diff = diff + (int(t2[1])-int(t1[1]))/float(12) #conversion from month to year
         else:
             diff = t - self.t0
-        sp_rel_t = math.exp(-math.pow((diff)/float(self.sigma_t), 2))
+        sp_rel_t = math.exp( -((diff / float(self.sigma_t))**2) )
         sp_rel = sp_rel_w * sp_rel_d * sp_rel_t
 
         return sp_nat * sp_rel 
@@ -203,9 +203,54 @@ class qrs:
         """ SR = r/r0 - 1 for increasing rate
             SR = r0/r - 1 for decreasing rate"""
         if self.claim_type == "increasing":
-            return float(r)/float(self.r0) - 1
-        return float(self.r0)/float(r) - 1
+            return float(r) / float(self.r0) - 1
+        return float(self.r0) / float(r) - 1
 
+    def exclude_p(self, results):
+        minSP = self.computeSpScore(results[0][1], results[0][2], results[0][0])
+        cur_id = 0
+        for i in range(1, len(results)):
+            cur_sp = self.computeSpScore(results[i])
+            if minSP > cur_sp:
+                results.pop(cur_id)
+                cur_id = i
+                minSP = cur_sp
+
+    def CA_tr(self, tr):
+        results = []
+        parameters = self.getP()
+        while parameters != -1:
+            t = parameters[0]
+            w = parameters[1]
+            d = parameters[2]
+            #print(fill_params(query, t, str(w), str(d)) )
+            self.db_cursor.execute( fill_params(query, t, str(w), str(d)) )
+            rows = self.db_cursor.fetchall()
+            for row in rows:
+                if row[0] is not None:
+                    if self.computeSrScore(row[0]) < tr:
+                        results.append(parameters)
+                        self.exclude_p(results)
+            parameters = self.getP()
+        return results
+
+    def CA_tp(self, tp):
+    # TODO
+        results = []
+        parameters = self.getP()
+        while parameters != -1:
+            t = parameters[0]
+            w = parameters[1]
+            d = parameters[2]
+            #print(fill_params(query, t, str(w), str(d)) )
+            self.db_cursor.execute( fill_params(query, t, str(w), str(d)) )
+            rows = self.db_cursor.fetchall()
+            for row in rows:
+                if row[0] is not None:
+                    if self.computeSpScore(row[0]) > tp:
+                        results.append(parameters)
+            parameters = self.getP()
+        return results
     def displaySr(self, x, y, matrix_sr):
         #interesting source: http://stackoverflow.com/questions/15908371/matplotlib-colorbars-and-its-text-labels
         #same: http://stackoverflow.com/questions/14336138/python-matplotlib-change-color-of-specified-value-in-contourf-plot-using-colorma

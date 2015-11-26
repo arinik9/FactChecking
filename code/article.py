@@ -30,7 +30,7 @@ if __name__ == '__main__':
     times = [1995, 2012]
     widths = [6]
     durations = range(1,19)
-    naturalness_levels = [(1,1), (2.71, 4), (7.39, 8)]
+    naturalness_levels = [(1,1), (2.718, 4), (7.389, 8)]
 
     obj.setParametersInterval(times, widths, durations)
     obj.setNaturalnessLevels(naturalness_levels)
