@@ -210,13 +210,16 @@ class qrs:
         minSP = self.computeSpScore(results[0][1], results[0][2], results[0][0])
         cur_id = 0
         for i in range(1, len(results)):
-            cur_sp = self.computeSpScore(results[i])
+            cur_sp = self.computeSpScore(results[i][1], results[i][2], results[i][0])
             if minSP > cur_sp:
                 results.pop(cur_id)
                 cur_id = i
                 minSP = cur_sp
+            elif minSP < cur_sp:
+                results.pop(i)
+        return results
 
-    def CA_tr(self, tr):
+    def CA_tr(self, tr, query):
         results = []
         parameters = self.getP()
         while parameters != -1:
@@ -230,7 +233,7 @@ class qrs:
                 if row[0] is not None:
                     if self.computeSrScore(row[0]) < tr:
                         results.append(parameters)
-                        self.exclude_p(results)
+                        results = self.exclude_p(results)
             parameters = self.getP()
         return results
 
@@ -247,7 +250,7 @@ class qrs:
             rows = self.db_cursor.fetchall()
             for row in rows:
                 if row[0] is not None:
-                    if self.computeSpScore(row[0]) > tp:
+                   # if self.computeSpScore(row[0]) > tp:
                         results.append(parameters)
             parameters = self.getP()
         return results

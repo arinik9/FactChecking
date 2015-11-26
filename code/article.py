@@ -42,17 +42,19 @@ if __name__ == '__main__':
     cpt = 0
     line = []
     for i in range(len(results)):
-        if i%10 < 1:
+        if i%7 < 1:
             print(line)
             line = []
         else:
             line.append(results[i])
-    print(line)
+            line.append(round(obj.computeSrScore(results[i][3]),2))
+    #print(line)
 
     matrix_sr=[np.nan]*len(durations)
     matrix_sp=[np.nan]*len(durations)
     #we  construct our matrix column by column
     
+    print("\n\n")
 
     old_t = results[0][0]
     column_sr = []
@@ -80,8 +82,8 @@ if __name__ == '__main__':
     matrix_sp = np.delete(matrix_sp, 0, 1) # we delete initialized row
     #print(matrix_sr)
 
+    print(obj.CA_tr(-0.2, query))
     obj.closeDb()
     
     #obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
-    obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
-
+    #obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
