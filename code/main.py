@@ -35,12 +35,12 @@ if __name__ == '__main__':
                                  WHERE mois = <t> - INTERVAL <d> MONTH) AS bf,
                                 (SELECT nb_chomeur FROM fact_checking.chomagePE
                                  WHERE mois = <t> - INTERVAL <d> + <w> + 1 MONTH ) AS af ) AS sarkozy;"""
-    times = ['2012-01-01', '2015-08-01']
+    times = ['2011-01-01', '2015-08-01']
     widths = [30]
-    durations = range(30,70)
+    durations = range(20,70)
     obj.setParametersInterval(times, widths, durations)
     obj.setNaturalnessLevels([(1,1), (2.71, 60)]) # exponential =~ 2.71
-    obj.setSigmaValues(3, 1, 10)
+    obj.setSigmaValues(5, 1, 10)
 
 ################################################################################
 # Compute Results
@@ -76,6 +76,7 @@ if __name__ == '__main__':
     matrix_sr = np.delete(matrix_sr, 0, 1) #we delete initialized row
     matrix_sp = np.delete(matrix_sp, 0, 1) # we delete initialized row
 
+    print(obj.t0)
     print(obj.CA_tr(-1, query))
     obj.closeDb()
     

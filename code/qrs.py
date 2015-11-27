@@ -175,26 +175,25 @@ class qrs:
 
         """ 
         naturalness level = (chi_l, pi_l)
-        x[1] % w == 0 => for checking if a duration can divide 
+        x[1] % w == 0 -> check if a duration is multiple of w
         pi_l (integral period). If not, we put -1. Because at the end
         we'll use max() function and -1 will not be seleceted in any case
-        """ 
-        sp_nat_w = max(map(lambda x: x[0] if x[1] % w == 0 else -1, self.naturalness_levels))
-        sp_nat_d = max(map(lambda x: x[0] if x[1] % d == 0 else -1, self.naturalness_levels))
+        """
+        sp_nat_w = max( map(lambda x: x[0] if x[1] % w == 0 else -1, self.naturalness_levels) )
+        sp_nat_d = max( map(lambda x: x[0] if x[1] % d == 0 else -1, self.naturalness_levels) )
         sp_nat = sp_nat_w * sp_nat_d
-
-        sp_rel_w = math.exp( -(float(w-self.w0) / float(self.sigma_w))**2 )
-        sp_rel_d = math.exp( -(float(d-self.d0) / float(self.sigma_d))**2 )
 
         if type(self.t0) == type(str()):
             # t1 and self.t0 are type of datetime like (2013-07-16)
-            t1=t.split("-")
-            t2=self.t0.split("-")
+            t1 = t.split("-")
+            t2 = self.t0.split("-")
             # substract 2 date (only year and month part)
-            diff = int(t2[0]) - int(t1[0]) + ( int(t2[1]) - int(t1[1]) ) / 12.0
+            diff = (int(t2[0]) - int(t1[0]))*12 + (int(t2[1]) - int(t1[1]))
         else:
             diff = t - self.t0
-        sp_rel_t = math.exp( -((diff / float(self.sigma_t))**2) )
+        sp_rel_t = math.exp( -1 * (diff / float(self.sigma_t))**2 )
+        sp_rel_w = math.exp( -1 * (float(w - self.w0) / float(self.sigma_w))**2 )
+        sp_rel_d = math.exp( -1 * (float(d - self.d0) / float(self.sigma_d))**2 )
         sp_rel = sp_rel_w * sp_rel_d * sp_rel_t
 
         return sp_nat * sp_rel 

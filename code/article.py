@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     obj.setParametersInterval(times, widths, durations)
     obj.setNaturalnessLevels(naturalness_levels)
-    obj.setSigmaValues(5, 1, 10)
+    obj.setSigmaValues(3, 1, 10)# sigma_w, sigma_t, sigma_d
 
 ################################################################################
 # Compute Results
@@ -86,4 +86,4 @@ if __name__ == '__main__':
     obj.closeDb()
     
     #obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
-    #obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
+    obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
