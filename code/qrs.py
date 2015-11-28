@@ -255,89 +255,35 @@ class qrs:
                         results.append(parameters)
             parameters = self.getP()
         return results
+
     def displaySr(self, x, y, matrix_sr):
         #interesting source: http://stackoverflow.com/questions/15908371/matplotlib-colorbars-and-its-text-labels
         #same: http://stackoverflow.com/questions/14336138/python-matplotlib-change-color-of-specified-value-in-contourf-plot-using-colorma
         #same: http://stackoverflow.com/questions/14391959/heatmap-in-matplotlib-with-pcolor
-        
+
         #greener colors strengthen the claim
         #redder colors weaken the claim
 
         #we do not want to display nan values. So we mask nan values
         #there is nan values because some parameter combinations are not valid
         masked_array = np.ma.array (matrix_sr, mask=np.isnan(matrix_sr))
-        #We could do our colormap with discrete (listed) colors but LinearSegmentedColormap is better 
+        #We could do our colormap with discrete (listed) colors but LinearSegmentedColormap is better
         #cMap = ListedColormap(['#FE2E2E', '#FE642E', '#FE9A2E', '#FACC2E', '#FFFF00', '#F3F781', '#C8FE2E', '#00FF00', '#01DF01'])
 
-        #colors = [(plt.cm.jet(i)) for i in xrange(230,130,-1)]
-        #plt.cm.jet() has 256 different colors. 
+        colors = [(plt.cm.jet(i)) for i in xrange(230,140,-1)]
+	orange=[(1.0, 0.3176470588235294, 0.0, 1.0), (1.0, 0.3254901960784314, 0.0, 1.0), (1.0, 0.3333333333333333, 0.0, 1.0), (1.0, 0.3411764705882353, 0.0, 1.0), (1.0, 0.34901960784313724, 0.0, 1.0), (1.0, 0.3568627450980392, 0.0, 1.0), (1.0, 0.36470588235294116, 0.0, 1.0), (1.0, 0.37254901960784315, 0.0, 1.0), (1.0, 0.3803921568627451, 0.0, 1.0), (1.0, 0.38823529411764707, 0.0, 1.0), (1.0, 0.396078431372549, 0.0, 1.0), (1.0, 0.403921568627451, 0.0, 1.0), (1.0, 0.4117647058823529, 0.0, 1.0), (1.0, 0.4196078431372549, 0.0, 1.0), (1.0, 0.42745098039215684, 0.0, 1.0), (1.0, 0.43529411764705883, 0.0, 1.0), (1.0, 0.44313725490196076, 0.0, 1.0), (1.0, 0.45098039215686275, 0.0, 1.0), (1.0, 0.4588235294117647, 0.0, 1.0), (1.0, 0.4666666666666667, 0.0, 1.0), (1.0, 0.4745098039215686, 0.0, 1.0), (1.0, 0.4823529411764706, 0.0, 1.0), (1.0, 0.49019607843137253, 0.0, 1.0), (1.0, 0.4980392156862745, 0.0, 1.0), (1.0, 0.5058823529411764, 0.0, 1.0), (1.0, 0.5137254901960784, 0.0, 1.0), (1.0, 0.5215686274509804, 0.0, 1.0), (1.0, 0.5294117647058824, 0.0, 1.0), (1.0, 0.5372549019607843, 0.0, 1.0), (1.0, 0.5450980392156862, 0.0, 1.0), (1.0, 0.5529411764705883, 0.0, 1.0), (1.0, 0.5607843137254902, 0.0, 1.0), (1.0, 0.5686274509803921, 0.0, 1.0), (1.0, 0.5764705882352941, 0.0, 1.0), (1.0, 0.5843137254901961, 0.0, 1.0), (1.0, 0.592156862745098, 0.0, 1.0), (1.0, 0.6, 0.0, 1.0), (1.0, 0.6078431372549019, 0.0, 1.0), (1.0, 0.615686274509804, 0.0, 1.0), (1.0, 0.6235294117647059, 0.0, 1.0), (1.0, 0.6313725490196078, 0.0, 1.0), (1.0, 0.6392156862745098, 0.0, 1.0), (1.0, 0.6470588235294118, 0.0, 1.0), (1.0, 0.6549019607843137, 0.0, 1.0), (1.0, 0.6627450980392157, 0.0, 1.0), (1.0, 0.6705882352941176, 0.0, 1.0), (1.0, 0.6784313725490196, 0.0, 1.0), (1.0, 0.6862745098039216, 0.0, 1.0), (1.0, 0.6941176470588235, 0.0, 1.0), (1.0, 0.7019607843137254, 0.0, 1.0), (1.0, 0.7098039215686275, 0.0, 1.0), (1.0, 0.7176470588235294, 0.0, 1.0)]
+
+	green = [(0.6509803921568628, 1.0, 0.30980392156862746, 1.0), (0.6431372549019608, 1.0, 0.30980392156862746, 1.0), (0.6352941176470588, 1.0, 0.30980392156862746, 1.0), (0.6274509803921569, 1.0, 0.30980392156862746, 1.0), (0.6196078431372549, 1.0, 0.30980392156862746, 1.0), (0.611764705882353, 1.0, 0.30980392156862746, 1.0), (0.6039215686274509, 1.0, 0.30980392156862746, 1.0), (0.596078431372549, 1.0, 0.30980392156862746, 1.0), (0.5882352941176471, 1.0, 0.30980392156862746, 1.0), (0.5803921568627451, 1.0, 0.30980392156862746, 1.0), (0.5725490196078431, 1.0, 0.30980392156862746, 1.0), (0.5647058823529412, 1.0, 0.30980392156862746, 1.0), (0.5568627450980392, 1.0, 0.30980392156862746, 1.0), (0.5490196078431373, 1.0, 0.30980392156862746, 1.0), (0.5411764705882353, 1.0, 0.30980392156862746, 1.0),(0.5333333333333333, 1.0, 0.30980392156862746, 1.0), (0.5254901960784314, 1.0, 0.30980392156862746, 1.0), (0.5176470588235295, 1.0, 0.30980392156862746, 1.0), (0.5098039215686274, 1.0, 0.30980392156862746, 1.0)]# , (0.5019607843137255, 1.0, 0.30980392156862746, 1.0), (0.49411764705882355, 1.0, 0.30980392156862746, 1.0), (0.48627450980392156, 1.0, 0.30980392156862746, 1.0), (0.47843137254901963, 1.0, 0.30980392156862746, 1.0), (0.47058823529411764, 1.0, 0.30980392156862746, 1.0), (0.4627450980392157, 1.0, 0.30980392156862746, 1.0), (0.4549019607843137, 1.0, 0.30980392156862746, 1.0), (0.4470588235294118, 1.0, 0.30980392156862746, 1.0), (0.4392156862745098, 1.0, 0.30980392156862746, 1.0), (0.43137254901960786, 1.0, 0.30980392156862746, 1.0), (0.4235294117647059, 1.0, 0.30980392156862746, 1.0), (0.41568627450980394, 1.0, 0.30980392156862746, 1.0), (0.40784313725490196, 1.0, 0.30980392156862746, 1.0), (0.4, 1.0, 0.30980392156862746, 1.0)
+
+        colors= colors[:20]+orange+colors[49:]+green # len(green)=19, len(orange)=52
+        #plt.cm.jet() has 256 different colors.
         #We will focus on xrange(130,230) in descending order
         #because we want that redder colors matches poor values
         #and greener colors maches high values
 
-        cMap = LinearSegmentedColormap("cMap", {'red':   [(0.0,  1.0, 1.0),
-                                                           (0.5,  0.5, 0.5),
-                                                           (1.0,  0.0, 0.0)],
 
-                                                'green': [(0.0,  0.0, 0.0),
-                                                           (0.5, 0.5, 0.5),
-                                                           (1.0,  1.0, 1.0)],
-
-                                                'blue':  [(0.0,  0.0, 0.0),
-                                                           (1.0,  0.0, 0.0)]})
         #cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
-        fig, ax = plt.subplots()
-        #fig, ax = plt.subplots(1,1, figsize=(6,6))
-        #heatmap = ax.pcolor(masked_array, cmap=cMap)
-        heatmap = ax.pcolormesh(masked_array, cmap=cMap)
-        ax.set_xticks(range(len(x)))
-        if type(self.t_interval[0]) == type(str):
-            ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
-        else:
-            ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
-        ax.tick_params(axis='x', labelsize=8)
-        ax.set_yticks(range(len(y)))
-        ax.set_yticklabels(map(lambda i: str(i), y))
-        plt.autoscale()
-        ax.grid(False)
-
-        fig.suptitle('Strength Result')
-
-        #we limit colormap values. we force max_limit to 0.4 in case of no existence of positive values
-        #because positive values should match greener colors
-        max_limit = max(map(lambda i: max(i), masked_array))
-        min_limit = min(map(lambda i: min(i), masked_array))
-        if max_limit <0:
-            max_limit=0.40
-        heatmap.set_clim(vmin=min_limit, vmax=max_limit)
-        plt.colorbar(heatmap)
-        plt.show()
-
-    def displaySp(self, x, y, matrix_sp):
-        # darker colors indicates higher sensibility
-
-        #we do not want to display nan values. So we mask nan values
-        #there is nan values because some parameter combinations are not valid
-        masked_array = np.ma.array (matrix_sp, mask=np.isnan(matrix_sp))
-        #We could do our colormap with discrete (listed) colors but LinearSegmentedColormap is better 
-        #cMap = ListedColormap(['#FE2E2E', '#FE642E', '#FE9A2E', '#FACC2E', '#FFFF00', '#F3F781', '#C8FE2E', '#00FF00', '#01DF01'])
-
-        colors = [(plt.cm.jet(i)) for i in xrange(172,0,-1)]
-        #plt.cm.jet() has 256 different colors. 
-        #We will focus on xrange(172,0) in descending order
-        #because we want that darker colors matches high values
-        #and greener/yellower colors maches poor values
-
-        
-        cMap = LinearSegmentedColormap("cMap", {'red':   [(0.0,  0.0, 0.0),
-                                                           (1.0,  0.5, 0.5)],
-
-                                                'green': [(0.0,  0.0, 0.0),
-                                                           (0.5, 0.5, 0.5),
-                                                           (1.0,  1.0, 1.0)],
-
-                                                'blue':  [(0.0,  0.0, 0.0),
-                                                           (1.0,  0.5, 0.5)]})
+        cMap = LinearSegmentedColormap.from_list('cMap', colors,  N=184) #N=20+52+41+19
         cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
         fig, ax = plt.subplots()
         #fig, ax = plt.subplots(1,1, figsize=(6,6))
@@ -352,14 +298,79 @@ class qrs:
         ax.set_yticks(range(len(y)))
         ax.set_yticklabels(map(lambda i: str(i), y))
         plt.autoscale()
-        ax.grid(False)
+        ax.grid(True)
+
+        fig.suptitle('Strength Result')
+
+        #we limit colormap values. we force max_limit to 0.4 in case of no existence of positive values
+        #because positive values should match greener colors
+        max_limit=0
+        min_limit=0
+        for i in xrange(len(masked_array)):
+            for j in xrange(len(masked_array[i])):
+                if masked_array[i][j] > max_limit:
+                    max_limit=masked_array[i][j]
+                if masked_array[i][j] < min_limit:
+                    min_limit=masked_array[i][j]
+	print max_limit
+	print min_limit
+	np.set_printoptions(threshold='nan')
+	print masked_array
+        if max_limit <0:
+            max_limit=0.40
+        heatmap.set_clim(vmin=min_limit, vmax=max_limit)
+        plt.colorbar(heatmap)
+        plt.show()
+
+    def displaySp(self, x, y, matrix_sp):
+        # darker colors indicates higher sensibility
+
+        #we do not want to display nan values. So we mask nan values
+        #there is nan values because some parameter combinations are not valid
+        masked_array = np.ma.array (matrix_sp, mask=np.isnan(matrix_sp))
+        #We could do our colormap with discrete (listed) colors but LinearSegmentedColormap is better
+        #cMap = ListedColormap(['#FE2E2E', '#FE642E', '#FE9A2E', '#FACC2E', '#FFFF00', '#F3F781', '#C8FE2E', '#00FF00', '#01DF01'])
+
+        colors = [(plt.cm.jet(i)) for i in xrange(172,0,-1)]
+        #plt.cm.jet() has 256 different colors.
+        #We will focus on xrange(172,0) in descending order
+        #because we want that darker colors matches high values
+        #and greener/yellower colors maches poor values
+
+        #cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
+        fire_color=[(255, 238, 112),(255, 237, 110),(255, 235, 108),(255, 233, 106),(255, 231, 104),(255, 229, 102),(255, 227, 100),(255, 225, 98),(255, 223, 96),(255, 221, 94),(255, 219, 92),(255, 217, 90),(255, 215, 88),(255, 213, 86),(255, 211, 84),(255, 209, 81),(255, 207, 79),(255, 205, 77),(255, 203, 75),(255, 201, 73),(255, 199, 71),(255, 197, 69),(255, 195, 67),(255, 193, 65),(255, 191, 63),(255, 189, 61),(255, 187, 59),(255, 185, 57),(255, 183, 55),(255, 181, 53),(255, 179, 51), (255, 177, 49),(255, 175, 47),(255, 173, 45),(255, 171, 43),(255, 169, 41),(255, 167, 39),(255, 165, 37),(255, 163, 35),(255, 161, 33),(255, 159, 31),(255, 157, 29),(255, 155, 27),(255, 153, 25),(255, 151, 23),(255, 149, 21),(255, 147, 19),(255, 145, 17),(255, 143, 15),(255, 141, 13),(255, 138, 11),(255, 136, 9),(255, 134, 7),(255, 132, 5),(255, 131, 3),(255, 129, 1),(254, 126, 0),(252, 125, 0),(250, 122, 0),(248, 121, 0),(246, 118, 0),(244, 116, 0),(242, 115, 0),(240, 113, 0),(238, 111,0),(236, 109, 0),(234, 107, 0),(232, 105, 0),(230, 102, 0),(228, 100, 0),(227, 98, 0),(225, 97, 0),(223, 94, 0),(221, 93, 0),(219, 91, 0),(217, 89, 0),(215, 87, 0),(213, 84, 0),(211, 83, 0),(209, 81, 0),(207, 79, 0),(205, 77, 0),(203, 75, 0),(201, 73, 0),(199, 70, 0),(197, 68, 0),(195, 66, 0),(193, 64, 0),(191, 63, 0),(189, 61, 0),(187, 59, 0),(185, 57, 0),(183, 54, 0),(181, 52, 0),(179, 51, 0),(177, 49, 0),(175, 47, 0),(174, 44, 0),(172, 42, 0),(170, 40, 0),(168, 39, 0), (166, 37, 0),(164, 34, 0),(162, 33, 0),(160, 31, 0),(158, 29, 0),(156, 27, 0),(154, 25, 0),(152, 22, 0),(150, 20, 0),(148, 18, 0),(146, 17, 0),(144, 14, 0),(142, 13, 0),(140, 11, 0),(138, 9, 0),(136, 6, 0),(134, 4, 0),(132, 2, 0),(130, 0, 0),(128, 0, 0),(126, 0, 0),(124, 0, 0),(122, 0, 0),(120, 0, 0),(118, 0, 0),(116, 0, 0),(114, 0, 0),(112, 0, 0),(110, 0, 0),(108, 0, 0),(106, 0, 0),(104, 0, 0),(102, 0, 0),(100, 0, 0),(98, 0, 0),(96, 0, 0),(94, 0, 0),(92, 0, 0),(90, 0, 0),(88, 0, 0),(86, 0, 0),(83, 0, 0),(81, 0, 0),(79, 0, 0),(77, 0, 0),(75, 0, 0),(73, 0, 0),(71, 0, 0),(69, 0, 0),(67, 0, 0),(65, 0, 0),(63, 0, 0),(61, 0, 0),(59, 0, 0),(57, 0, 0),(55, 0, 0),(53, 0, 0),(51, 0, 0),(49, 0, 0),(47, 0, 0),(45, 0, 0),(43, 0, 0),(41, 0, 0),(39, 0, 0),(37, 0, 0),(35, 0, 0),(33, 0, 0),(31, 0, 0),(29, 0, 0),(26, 0, 0),(24, 0, 0),(22, 0, 0),(20, 0, 0),(18, 0, 0),(16, 0, 0),(14, 0, 0),(12, 0, 0),(10, 0, 0),(8, 0, 0),(6, 0, 0),(4, 0, 0),(2,0, 0),(0, 0, 0)]
+
+        fire = map(lambda x: (x[0]/float(255),x[1]/float(255),x[2]/float(255)),fire_color)
+        fire=list(reversed(fire))
+        cMap = LinearSegmentedColormap.from_list('cMap', fire, N=len(fire))
+        fig, ax = plt.subplots()
+        #fig, ax = plt.subplots(1,1, figsize=(6,6))
+        #heatmap = ax.pcolor(masked_array, cmap=cMap)
+        #heatmap = ax.pcolormesh(masked_array, cmap=plt.get_cmap("afmhot"))
+        heatmap = ax.pcolormesh(masked_array, cmap=cMap)
+        ax.set_xticks(range(len(x)))
+        if type(self.t_interval[0]) == type(str):
+            ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
+        else:
+            ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
+        ax.tick_params(axis='x', labelsize=8)
+        ax.set_yticks(np.arange(len(y)))
+        ax.set_yticklabels(map(lambda i: str(i), y))
+        #plt.autoscale()
+        ax.grid(True)
 
         fig.suptitle('Parameter of Sensibility')
 
         #we limit colormap values. we force min_limit to -1 in case of no existence of negative values
         #because positive values should match greener colors
-        max_limit = max(map(lambda i: max(i), masked_array))
-        min_limit = min(map(lambda i: min(i), masked_array))
+        max_limit=0
+        min_limit=0
+        for i in xrange(len(masked_array)):
+            for j in xrange(len(masked_array[i])):
+                if masked_array[i][j] > max_limit:
+                    max_limit=masked_array[i][j]
+                if masked_array[i][j] < min_limit:
+                    min_limit=masked_array[i][j]
         if max_limit <0:
             max_limit=0.40
         if min_limit >0:
