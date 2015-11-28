@@ -218,7 +218,7 @@ class qrs:
 
         return subset_a
 
-    def CA_tr(self, tr, query):
+    def CA_tr(self, threshold_r, query):
         results = []
         parameters = self.getP()
         while parameters != -1:
@@ -230,15 +230,16 @@ class qrs:
             rows = self.db_cursor.fetchall()
             for row in rows:
                 if row[0] is not None:
-                    if self.computeSrScore(row[0]) < tr:
+                    if self.computeSrScore(row[0]) < threshold_r:
                         results = self.exclude_p(results, parameters)
             parameters = self.getP()
         return results
 
-    def CA_tp(self, tp):
+    def CA_tp(self, threshold_p):
     # TODO
-        results = []
+        subset_a = []
         parameters = self.getP()
+        min_sr=0
         while parameters != -1:
             t = parameters[0]
             w = parameters[1]
@@ -248,10 +249,19 @@ class qrs:
             rows = self.db_cursor.fetchall()
             for row in rows:
                 if row[0] is not None:
-                   # if self.computeSpScore(row[0]) > tp:
-                        results.append(parameters)
+                    sr = self.computeSrScore(row[0])
+                    sp=self.computeSpScore(w,d,t)
+                    if sp > threshold_p:
+                        sub_list = map(lambda x: x[1], subset_a)
+                        if len(sublist)>0:
+                            min_sr=min(sub_list)
+                            if min_sr>sr:
+                                subset_a.insert(0,(sp, sr))#adding to beggining of the list
+                        else:
+                            subset_a.append((sp, sr))
+
             parameters = self.getP()
-        return results
+        return subset_a
 
     def displaySr(self, x, y, matrix_sr):
         #interesting source: http://stackoverflow.com/questions/15908371/matplotlib-colorbars-and-its-text-labels
