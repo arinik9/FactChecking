@@ -53,7 +53,7 @@ if __name__ == '__main__':
     matrix_sr=[np.nan]*len(durations)
     matrix_sp=[np.nan]*len(durations)
     #we  construct our matrix column by column
-    
+
     print("\n\n")
 
     old_t = results[0][0]
@@ -82,8 +82,11 @@ if __name__ == '__main__':
     matrix_sp = np.delete(matrix_sp, 0, 1) # we delete initialized row
     #print(matrix_sr)
 
-    print(obj.CA_tr(-0.2, query))
+    threshold_r = -0.2
+    print(obj.CA_tr(threshold_r, query))
+    #if threshold_r == -0.7, the result would be [[2010, 6, 8]]
+    #if threshold_r == -0.2, the result would be [[2001, 6, 4]]
     obj.closeDb()
-    
-    #obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
+
+    obj.displaySr(obj.timelist, obj.d_interval, matrix_sr)
     obj.displaySp(obj.timelist, obj.d_interval, matrix_sp)
