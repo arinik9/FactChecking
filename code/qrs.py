@@ -102,7 +102,7 @@ class qrs:
         else:
             cur_period = self.t_interval[0]
             last_period = self.t_interval[1]
-            
+
         #sarkozy_beginning_time = datetime.strptime("2007-05-01", "%Y-%m-%d")
 
         while cur_period <= last_period:
@@ -169,11 +169,11 @@ class qrs:
         return results
 
     def computeSpScore(self, w, d, t):
-        """ SP = SP_nat * SP_rel 
+        """ SP = SP_nat * SP_rel
         SP_nat = SP_nat_w * SP_nat_d
         SP_rel = SP_rel_w * SP_rel_d * SP_rel_t """
 
-        """ 
+        """
         naturalness level = (chi_l, pi_l)
         x[1] % w == 0 -> check if a duration is multiple of w
         pi_l (integral period). If not, we put -1. Because at the end
@@ -181,7 +181,8 @@ class qrs:
         """
         sp_nat_w = max( map(lambda x: x[0] if x[1] % w == 0 else -1, self.naturalness_levels) )
         sp_nat_d = max( map(lambda x: x[0] if x[1] % d == 0 else -1, self.naturalness_levels) )
-        sp_nat = sp_nat_w * sp_nat_d
+        #sp_nat = sp_nat_w * sp_nat_d => un problem sur le calcul de sp_w
+        sp_nat =  sp_nat_d * 1 # TODO find a solution for print sp_nat_w
 
         if type(self.t0) == type(str()):
             # t1 and self.t0 are type of datetime like (2013-07-16)
@@ -196,7 +197,7 @@ class qrs:
         sp_rel_d = math.exp( -1 * (float(d - self.d0) / float(self.sigma_d))**2 )
         sp_rel = sp_rel_w * sp_rel_d * sp_rel_t
 
-        return sp_nat * sp_rel 
+        return sp_nat * sp_rel
 
     def computeSrScore(self, r):
         """ SR = r/r0 - 1 for increasing rate
@@ -205,20 +206,17 @@ class qrs:
             return float(r) / float(self.r0) - 1
         return float(self.r0) / float(r) - 1
 
-    def exclude_p(self, results):
-        minSP = self.computeSpScore(results[0][1], results[0][2], results[0][0])
-        cur_id = 0
-        i = 1
-        while i < len(results):
-            cur_sp = self.computeSpScore(results[i][1], results[i][2], results[i][0])
-            if minSP > cur_sp:
-                results.pop(cur_id)
-                cur_id = i
-                minSP = cur_sp
-            elif minSP < cur_sp:
-                results.pop(i)
-            i += 1
-        return results
+    def exclude_p(self, subset_a, p):
+        sp = self.computeSpScore(p[1], p[2], p[0])
+        for p_prime in subset_a:
+            sp_prime = self.computeSpScore(p_prime[1], p_prime[2], p_prime[0])
+            if sp > sp_prime:
+                subset_a.remove(p_prime)
+
+        if len(subset_a) == 0:
+            subset_a.append(p)
+
+        return subset_a
 
     def CA_tr(self, tr, query):
         results = []
@@ -233,8 +231,7 @@ class qrs:
             for row in rows:
                 if row[0] is not None:
                     if self.computeSrScore(row[0]) < tr:
-                        results.append(parameters)
-                        results = self.exclude_p(results)
+                        results = self.exclude_p(results, parameters)
             parameters = self.getP()
         return results
 
@@ -340,6 +337,7 @@ class qrs:
         #cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
         fire_color=[(255, 238, 112),(255, 237, 110),(255, 235, 108),(255, 233, 106),(255, 231, 104),(255, 229, 102),(255, 227, 100),(255, 225, 98),(255, 223, 96),(255, 221, 94),(255, 219, 92),(255, 217, 90),(255, 215, 88),(255, 213, 86),(255, 211, 84),(255, 209, 81),(255, 207, 79),(255, 205, 77),(255, 203, 75),(255, 201, 73),(255, 199, 71),(255, 197, 69),(255, 195, 67),(255, 193, 65),(255, 191, 63),(255, 189, 61),(255, 187, 59),(255, 185, 57),(255, 183, 55),(255, 181, 53),(255, 179, 51), (255, 177, 49),(255, 175, 47),(255, 173, 45),(255, 171, 43),(255, 169, 41),(255, 167, 39),(255, 165, 37),(255, 163, 35),(255, 161, 33),(255, 159, 31),(255, 157, 29),(255, 155, 27),(255, 153, 25),(255, 151, 23),(255, 149, 21),(255, 147, 19),(255, 145, 17),(255, 143, 15),(255, 141, 13),(255, 138, 11),(255, 136, 9),(255, 134, 7),(255, 132, 5),(255, 131, 3),(255, 129, 1),(254, 126, 0),(252, 125, 0),(250, 122, 0),(248, 121, 0),(246, 118, 0),(244, 116, 0),(242, 115, 0),(240, 113, 0),(238, 111,0),(236, 109, 0),(234, 107, 0),(232, 105, 0),(230, 102, 0),(228, 100, 0),(227, 98, 0),(225, 97, 0),(223, 94, 0),(221, 93, 0),(219, 91, 0),(217, 89, 0),(215, 87, 0),(213, 84, 0),(211, 83, 0),(209, 81, 0),(207, 79, 0),(205, 77, 0),(203, 75, 0),(201, 73, 0),(199, 70, 0),(197, 68, 0),(195, 66, 0),(193, 64, 0),(191, 63, 0),(189, 61, 0),(187, 59, 0),(185, 57, 0),(183, 54, 0),(181, 52, 0),(179, 51, 0),(177, 49, 0),(175, 47, 0),(174, 44, 0),(172, 42, 0),(170, 40, 0),(168, 39, 0), (166, 37, 0),(164, 34, 0),(162, 33, 0),(160, 31, 0),(158, 29, 0),(156, 27, 0),(154, 25, 0),(152, 22, 0),(150, 20, 0),(148, 18, 0),(146, 17, 0),(144, 14, 0),(142, 13, 0),(140, 11, 0),(138, 9, 0),(136, 6, 0),(134, 4, 0),(132, 2, 0),(130, 0, 0),(128, 0, 0),(126, 0, 0),(124, 0, 0),(122, 0, 0),(120, 0, 0),(118, 0, 0),(116, 0, 0),(114, 0, 0),(112, 0, 0),(110, 0, 0),(108, 0, 0),(106, 0, 0),(104, 0, 0),(102, 0, 0),(100, 0, 0),(98, 0, 0),(96, 0, 0),(94, 0, 0),(92, 0, 0),(90, 0, 0),(88, 0, 0),(86, 0, 0),(83, 0, 0),(81, 0, 0),(79, 0, 0),(77, 0, 0),(75, 0, 0),(73, 0, 0),(71, 0, 0),(69, 0, 0),(67, 0, 0),(65, 0, 0),(63, 0, 0),(61, 0, 0),(59, 0, 0),(57, 0, 0),(55, 0, 0),(53, 0, 0),(51, 0, 0),(49, 0, 0),(47, 0, 0),(45, 0, 0),(43, 0, 0),(41, 0, 0),(39, 0, 0),(37, 0, 0),(35, 0, 0),(33, 0, 0),(31, 0, 0),(29, 0, 0),(26, 0, 0),(24, 0, 0),(22, 0, 0),(20, 0, 0),(18, 0, 0),(16, 0, 0),(14, 0, 0),(12, 0, 0),(10, 0, 0),(8, 0, 0),(6, 0, 0),(4, 0, 0),(2,0, 0),(0, 0, 0)]
 
+        fire_color = list(reversed(fire_color))
         fire = map(lambda x: (x[0]/float(255),x[1]/float(255),x[2]/float(255)),fire_color)
         fire=list(reversed(fire))
         cMap = LinearSegmentedColormap.from_list('cMap', fire, N=len(fire))
