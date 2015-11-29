@@ -242,10 +242,12 @@ class qrs:
             t, w, d, r = result[0:4]
             sr = self.SR(r)
             sp = self.SP(w,d,t)
-            if sr<0:
+            if sr<0: # a counter-argument should be < 0
                 if len(subset_a)>0:
                     add = True
                     for a in subset_a:
+                        # we want to keep in the list the items which are equals (sp and sr)
+                        # that is why we added not() statement in addition
                         if sp>=a[0] and sr<=a[1] and not(sp==a[0] and sr==a[1]):
                             subset_a.remove(a)
                         elif sp<=a[0] and sr>=a[1] and not(sp==a[0] and sr==a[1]):
@@ -303,6 +305,8 @@ class qrs:
             if len(subset_a)>0:
                 add = True
                 for a in subset_a:
+                    # we want to keep in the list the items which are equals (sp and sr)
+                    # that is why we added not() statement in addition
                     if sp>=a[0] and sr<=a[1] and not(sp==a[0] and sr==a[1]):
                         subset_a.remove(a)
                     elif sp<=a[0] and sr>=a[1] and not(sp==a[0] and sr==a[1]):
