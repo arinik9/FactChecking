@@ -109,7 +109,7 @@ class qrs:
                                 self.timelist.append(str(cur_period)[:10])
                     else:
                         # Constraint t-w-d >= min_time
-                        if cur_period-w-d >= self.min_time - 1:
+                        if cur_period-w-d >= self.min_time:
                             self.all_possible_parameters.put( [cur_period, w, d] )
                             if cur_period not in self.timelist:
                                 self.timelist.append(cur_period)
@@ -182,14 +182,14 @@ class qrs:
         sp_rel_d = math.exp( -1 * (float(d - self.d0) / float(self.sigma_d))**2 )
         sp_rel = sp_rel_w * sp_rel_d * sp_rel_t
 
-        return sp_nat * sp_rel
+        return round(sp_nat * sp_rel, 3)
 
     def SR(self, r):
         """ SR = r/r0 - 1 for increasing rate
             SR = r0/r - 1 for decreasing rate"""
         if self.claim_type == "increasing":
-            return float(r) / float(self.r0) - 1
-        return float(self.r0) / float(r) - 1
+            return round((float(r) / float(self.r0)) - 1, 3)
+        return round((float(self.r0) / float(r)) - 1, 3)
 
     def exclude_p(self, subset_a, p):
         sp = self.SP(p[1], p[2], p[0])
@@ -204,6 +204,8 @@ class qrs:
         return subset_a
 
     def CA_tr(self, threshold_r, results):
+        if threshold_r>0:
+            return "please give a negatif threshold"
         subset_a = []
         for result in results:
             if self.SR( result[3] ) < threshold_r:
@@ -229,7 +231,7 @@ class qrs:
                 else:
                     subset_a.append( [sp, sr, (t,w,d)] ) # just for the first insert
 
-        return subset_a
+        return [i[2] for i in subset_a]
 
 
     def CA_po(self, k, results):
@@ -240,12 +242,70 @@ class qrs:
             t, w, d, r = result[0:4]
             sr = self.SR(r)
             sp = self.SP(w,d,t)
+            if sr<0:
+                if len(subset_a)>0:
+                    add = True
+                    for a in subset_a:
+                        if sp>=a[0] and sr<=a[1] and not(sp==a[0] and sr==a[1]):
+                            subset_a.remove(a)
+                        elif sp<=a[0] and sr>=a[1] and not(sp==a[0] and sr==a[1]):
+                            add = False
+                            break
+                    if add:
+                        subset_a.append((sp, sr, (t,w,d)))
+                else: # len(subset_a) == 0 => just for the first insert
+                    subset_a.append((sp, sr, (t,w,d)))
+
+        subset_a.sort(key=lambda x: x[0], reverse=True) #ordering by SP
+        #return  [i[2] for i in subset_a[:k]]#just extract parameter information
+        return  subset_a[:k]
+
+
+    def RE_tr(self, threshold_r, results):
+        if threshold_r<0:
+            return "please give a positif threshold"
+        subset_a = []
+        for result in results:
+            if abs(self.SR( result[3] )) < threshold_r:
+                subset_a = self.exclude_p( subset_a, result[0:3] )
+        return subset_a
+
+    def RE_tp(self, threshold_p, results):
+    #This method returns a list. The first element of this list is an item with the lowest SR value
+    #That is why we add at the beginning of the list each time
+        subset_a = []
+        min_sr = 0
+        for result in results:
+            t, w, d, r = result[0:4]
+            sr = abs(self.SR(r))
+            sp = self.SP(w,d,t)
+            if sp > threshold_p:
+                sub_list = map( lambda x: x[1], subset_a )
+                if len(sub_list) > 0:
+                # sub_list will be empty at the beginning
+                    min_sr = min(sub_list)
+                    if min_sr > sr:
+                        subset_a.insert( 0, [sp, sr, (t,w,d)] )#adding to beggining of the list
+                else:
+                    subset_a.append( [sp, sr, (t,w,d)] ) # just for the first insert
+
+        return [i[2] for i in subset_a]
+
+
+    def RE_po(self, k, results):
+    # po: pareto-optimal
+    # k: nb of results for output with highest sensibility
+        subset_a = []
+        for result in results:
+            t, w, d, r = result[0:4]
+            sr = abs(self.SR(r))
+            sp = self.SP(w,d,t)
             if len(subset_a)>0:
                 add = True
                 for a in subset_a:
-                    if sp>a[0] and sr<a[1]:
+                    if sp>=a[0] and sr<=a[1] and not(sp==a[0] and sr==a[1]):
                         subset_a.remove(a)
-                    elif sp<a[0] and sr>a[1]:
+                    elif sp<=a[0] and sr>=a[1] and not(sp==a[0] and sr==a[1]):
                         add = False
                         break
                 if add:
@@ -253,8 +313,13 @@ class qrs:
             else: # len(subset_a) == 0 => just for the first insert
                 subset_a.append((sp, sr, (t,w,d)))
 
-        subset_a.sort(key=lambda x: x[0], reverse=True) #ordering by SP
-        return  [i[2] for i in subset_a[:k]]#just extract parameter information
+        subset_a.sort(key=lambda x: x[0], reverse=True) #ordering by SP =>descending order
+        k_first_items = subset_a[:k]
+        #return  [i[2] for i in subset_a[:k]]#just extract parameter information
+        k_first_items.sort(key=lambda x: x[1]) #ordering by SR => je triche un peu => normalement l'algo ne dit pas ca
+        # mais en fait si on voit la definition de RE, un RE possible devrait etre tres proche de r0. C'est pour ca j'ai appliquer ca ici
+        # avec la 2eme manipulation (ordering) on obtient les memes valeurs que celles de l'article
+        return k_first_items
 
 
     def checkClaimQuality(self, results):
@@ -310,6 +375,8 @@ class qrs:
         self.matrix_sp = np.delete( self.matrix_sp, 0, 1 )
 
     def displaySr(self, results):
+        if len(self.w_interval)>1:
+            return "Too much width values. Fixe w to some value. [article.py, line 21]"
         x, y = self.timelist, self.d_interval
         if self.matrix_sr is None:
             self.initMatrix( results )
@@ -373,8 +440,11 @@ class qrs:
         heatmap.set_clim(vmin=min_limit, vmax=max_limit)
         plt.colorbar(heatmap)
         plt.show()
+        return True
 
     def displaySp(self, results):
+        if len(self.w_interval)>1:
+            return "Too much width values. Fixe w to some value. [article.py, line 21]"
         x, y = self.timelist, self.d_interval
         if self.matrix_sr is None:
             self.initMatrix( results )
@@ -433,3 +503,4 @@ class qrs:
         heatmap.set_clim(vmin=min_limit, vmax=max_limit)
         plt.colorbar(heatmap)
         plt.show()
+        return True

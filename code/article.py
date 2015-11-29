@@ -14,11 +14,12 @@ if __name__ == '__main__':
                      WHERE year BETWEEN <t> - <w> - <d> + 1 and <t> - <d>) AS bf,
                     (SELECT  SUM(adoptions) AS total FROM nyc_adoptions
                      WHERE year BETWEEN <t> - <w> + 1 AND <t>) AS af;"""
-    t0, w0, d0, r0, limit_min = 2001, 6, 6, 1.665, 1989
+    t0, w0, d0, r0, limit_min = 2001, 6, 6, 1.665, 1988
     obj = qrs( query, t0, w0, d0, r0, "increasing", limit_min)
 
     times = [1995, 2012]
-    widths = [6]
+    widths = [1,2,3,4,5,6,7,8,9]
+    #widths = [6]
     durations = range(1,19)
     obj.initParameters( times, widths, durations )
 
@@ -31,18 +32,20 @@ if __name__ == '__main__':
     obj.openDb( conf_path )
     results = obj.execute()
     obj.closeDb()
+    print("\n")
+    print("I changed the width values. Now: ", widths)
 
-    print("CA_tr:")
-    print( obj.CA_tr(-0.1, results) )
-    print("CA_tp:")
-    print( obj.CA_tp(0.2, results) )
-    print("CA_po:")
-    print( obj.CA_po(5, results) )
+    # it is difficult to find an appropriate threshold for RE and CA
+    print("\nCA_po:")
+    print( obj.CA_po(5, results) ) # first 5 items
+
+    print("\nRE_po:")
+    print( obj.RE_po(5, results) )
 
     measures = obj.checkClaimQuality(results)
-    print "fairness: ", measures["fairness"]
+    print "\nfairness: ", measures["fairness"]
     print "robustness: ", measures["robustness"]
     print "uniqueness: ", measures["uniqueness"]
 
-    #obj.displaySr(results)
-    #obj.displaySp(results)
+    print(obj.displaySr(results))
+    print(obj.displaySp(results))
