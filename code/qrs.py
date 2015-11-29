@@ -1,15 +1,16 @@
-import MySQLdb
-import math
-import Queue
-from datetime import datetime, timedelta
+import math, Queue, ConfigParser, MySQLdb
+
 import numpy as np
 import matplotlib.pyplot as plt
+
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.pyplot import figure
+from datetime import datetime, timedelta
 
-def sub_month(month, date):
-    for i in range(month):
+# Utils
+def sub_month(n, date):
+    for i in range(n):
         date -= timedelta(days=1)
         date = date.replace(day=1)
     return date
@@ -33,16 +34,30 @@ def fill_params(query, t, w, d):
             res += query[i]
             i += 1
     return res
+
 # QRS stands for Query Response Surface modelize a claim and is consituted by a parametrized database query
 # a set of para
 class qrs:
     """Query Response Surface"""
-    def __init__(self, t0, w0, d0, r0, claim_type, min_time, max_time):
+    def __init__(self, query, t0, w0, d0, r0, claim_type, min_time):
+        """Initialization with parameters of the original claim"""
+        self.q = query
+        self.t0 = t0
+        self.w0 = w0
+        self.d0 = d0
+        self.r0 = r0
+
+        self.claim_type = claim_type
+        self.min_time = min_time
+        self.all_possible_parameters = Queue.Queue()
+        self.backup_parameters = Queue.Queue()
+        self.naturalness_levels = []
+        self.timelist = []
+
         self.db = None
-        self.db_name = None
         self.db_cursor = None
-        self.db_table_name = None
-        self.db_name = None
+        self.matrix_sr = None
+        self.matrix_sp = None
 
         """No parameter interval specified"""
         self.t_interval = None
@@ -50,60 +65,37 @@ class qrs:
         self.d_interval = None
 
         """No relevance parameters specified"""
-        self.sigma_w = None # for SP_rel
-        self.sigma_d = None # for SP_rel
-        self.sigma_t = None # for SP_rel
+        self.sigma_w = None
+        self.sigma_d = None
+        self.sigma_t = None
 
-        """Initialization with parameters of the original claim"""
-        self.t0 = t0
-        self.w0 = w0
-        self.d0 = d0
-        self.r0 = r0
-
-        """No query specified"""
-        self.q = None
-
-        self.claim_type = claim_type
-        self.min_time = min_time
-        self.max_time = max_time
-        self.all_possible_parameters = Queue.Queue()
-        self.backup_parameters = Queue.Queue()
-
-        """No naturalness levels specified"""
-        self.naturalness_levels = []
-        self.timelist = []
-
-    def connectToDb(self, host, username, passwd, dbname):
-        self.db_name = dbname
-        self.db = MySQLdb.connect(host=host,user=username,passwd=passwd,db=dbname)
+    def openDb(self, conf_path):
+        conf = ConfigParser.ConfigParser()
+        conf.read( conf_path )
+        self.db = MySQLdb.connect( 
+            conf.get('DB', 'host'),
+            conf.get('DB', 'user'),
+            conf.get('DB', 'password'),
+            conf.get('DB', 'name')
+        )
         self.db_cursor = self.db.cursor()
 
     def closeDb(self):
         self.db_cursor.close()
         self.db.close()
 
-    def setDbTableName(self,tablename):
-        self.db_table_name = tablename
-
-    def setDbName(self,db_name):
-        self.db_name = db_name
-
     """ t: end date of the second period
         w: lenght of periods
         d: distance between the end of each period"""
-    def setParametersInterval(self, t, w, d):
-        self.t_interval = t
-        self.w_interval = w
-        self.d_interval = d
+    def initParameters(self, t, w, d):
+        self.t_interval, self.w_interval, self.d_interval = t, w, d
         if type(t[0]) == type(str()):
-            cur_period = datetime.strptime(self.t_interval[0], "%Y-%m-%d")
-            last_period = datetime.strptime(self.t_interval[1], "%Y-%m-%d")
+            cur_period = datetime.strptime( self.t_interval[0], "%Y-%m-%d" )
+            last_period = datetime.strptime( self.t_interval[1], "%Y-%m-%d" )
             min_t = sub_month( 1, datetime.strptime(self.min_time, "%Y-%m-%d") )
         else:
             cur_period = self.t_interval[0]
             last_period = self.t_interval[1]
-
-        #sarkozy_beginning_time = datetime.strptime("2007-05-01", "%Y-%m-%d")
 
         while cur_period <= last_period:
             for w in self.w_interval:
@@ -128,13 +120,8 @@ class qrs:
             else:
                 cur_period += 1
 
-    def setQuery(self, q):
-        self.q = q
-
-    def setNaturalnessLevels(self, levels):
+    def initSP(self, levels, sigma_w, sigma_t, sigma_d):
         self.naturalness_levels = levels
-
-    def setSigmaValues(self, sigma_w, sigma_t, sigma_d):
         self.sigma_w = sigma_w
         self.sigma_d = sigma_d
         self.sigma_t = sigma_t
@@ -148,27 +135,25 @@ class qrs:
         # pour que les parametres soient pretes a la prochaine requete
         # on recharge la queue self.all_possible_parameters
         while not self.backup_parameters.empty():
-            self.all_possible_parameters.put(self.backup_parameters.get())
+            self.all_possible_parameters.put( self.backup_parameters.get() )
         return -1 # empty
 
-    def executeQuery(self, query):
+    def execute(self):
         results = []
-        values = self.getP()
+        parameters = self.getP()
 
-        while values != -1:
-            t = values[0]
-            w = values[1]
-            d = values[2]
+        while parameters != -1:
+            t, w, d = parameters[0:3]
             #print(fill_params(query, t, str(w), str(d)) )
-            self.db_cursor.execute( fill_params(query, t, str(w), str(d)) )
+            self.db_cursor.execute( fill_params(self.q, t, str(w), str(d)) )
             rows = self.db_cursor.fetchall()
             for row in rows:
                 if row[0] is not None:
-                    results.append((t, w, d, float(str(row[0]))))
-            values = self.getP()
+                    results.append( [t, w, d, float(str(row[0]))] )
+            parameters = self.getP()
         return results
 
-    def computeSpScore(self, w, d, t):
+    def SP(self, w, d, t):
         """ SP = SP_nat * SP_rel
         SP_nat = SP_nat_w * SP_nat_d
         SP_rel = SP_rel_w * SP_rel_d * SP_rel_t """
@@ -199,7 +184,7 @@ class qrs:
 
         return sp_nat * sp_rel
 
-    def computeSrScore(self, r):
+    def SR(self, r):
         """ SR = r/r0 - 1 for increasing rate
             SR = r0/r - 1 for decreasing rate"""
         if self.claim_type == "increasing":
@@ -207,9 +192,9 @@ class qrs:
         return float(self.r0) / float(r) - 1
 
     def exclude_p(self, subset_a, p):
-        sp = self.computeSpScore(p[1], p[2], p[0])
+        sp = self.SP(p[1], p[2], p[0])
         for p_prime in subset_a:
-            sp_prime = self.computeSpScore(p_prime[1], p_prime[2], p_prime[0])
+            sp_prime = self.SP(p_prime[1], p_prime[2], p_prime[0])
             if sp > sp_prime:
                 subset_a.remove(p_prime)
 
@@ -230,7 +215,7 @@ class qrs:
             rows = self.db_cursor.fetchall()
             for row in rows:
                 if row[0] is not None:
-                    if self.computeSrScore(row[0]) < threshold_r:
+                    if self.SR(row[0]) < threshold_r:
                         results = self.exclude_p(results, parameters)
             parameters = self.getP()
         return results
@@ -249,8 +234,8 @@ class qrs:
             rows = self.db_cursor.fetchall()
             for row in rows:
                 if row[0] is not None:
-                    sr = self.computeSrScore(row[0])
-                    sp=self.computeSpScore(w,d,t)
+                    sr = self.SR(row[0])
+                    sp=self.SP(w,d,t)
                     if sp > threshold_p:
                         sub_list = map(lambda x: x[1], subset_a) # we need the lowest SR value
                         if len(sub_list)>0: # sub_list will be empty at the beginning
@@ -262,8 +247,34 @@ class qrs:
 
             parameters = self.getP()
         return subset_a
+    def initMatrix(self, results):
+        self.matrix_sr = [np.nan] * len( self.d_interval )
+        self.matrix_sp = [np.nan] * len( self.d_interval )
 
-    def displaySr(self, x, y, matrix_sr):
+        old_t = results[0][0]
+        column_sr, column_sp = [], []
+        for result in results:
+            t, w, d, r = result[0:4]
+            if str(t) != str(old_t):
+                self.matrix_sr = np.column_stack( (self.matrix_sr, column_sr + [np.nan] * (len(self.d_interval) - len(column_sr))) )
+                self.matrix_sp = np.column_stack( (self.matrix_sp, column_sp + [np.nan] * (len(self.d_interval) - len(column_sp))) )
+                column_sr = []
+                column_sp = []
+            old_t = t
+            column_sr.append( self.SR(r) )
+            column_sp.append( self.SP(w, d, t) )
+
+        self.matrix_sr = np.column_stack( (self.matrix_sr, column_sr + [np.nan] * (len(self.d_interval) - len(column_sr))) )
+        self.matrix_sp = np.column_stack( (self.matrix_sp, column_sp + [np.nan] * (len(self.d_interval) - len(column_sp))) )
+
+        #delete initialized row
+        self.matrix_sr = np.delete( self.matrix_sr, 0, 1 )
+        self.matrix_sp = np.delete( self.matrix_sp, 0, 1 )
+
+    def displaySr(self, results):
+        x, y = self.timelist, self.d_interval
+        if self.matrix_sr is None:
+            self.initMatrix( results )
         #interesting source: http://stackoverflow.com/questions/15908371/matplotlib-colorbars-and-its-text-labels
         #same: http://stackoverflow.com/questions/14336138/python-matplotlib-change-color-of-specified-value-in-contourf-plot-using-colorma
         #same: http://stackoverflow.com/questions/14391959/heatmap-in-matplotlib-with-pcolor
@@ -273,14 +284,13 @@ class qrs:
 
         #we do not want to display nan values. So we mask nan values
         #there is nan values because some parameter combinations are not valid
-        masked_array = np.ma.array (matrix_sr, mask=np.isnan(matrix_sr))
+        masked_array = np.ma.array (self.matrix_sr, mask=np.isnan(self.matrix_sr))
         #We could do our colormap with discrete (listed) colors but LinearSegmentedColormap is better
         #cMap = ListedColormap(['#FE2E2E', '#FE642E', '#FE9A2E', '#FACC2E', '#FFFF00', '#F3F781', '#C8FE2E', '#00FF00', '#01DF01'])
 
         colors = [(plt.cm.jet(i)) for i in xrange(230,140,-1)]
-	orange=[(1.0, 0.3176470588235294, 0.0, 1.0), (1.0, 0.3254901960784314, 0.0, 1.0), (1.0, 0.3333333333333333, 0.0, 1.0), (1.0, 0.3411764705882353, 0.0, 1.0), (1.0, 0.34901960784313724, 0.0, 1.0), (1.0, 0.3568627450980392, 0.0, 1.0), (1.0, 0.36470588235294116, 0.0, 1.0), (1.0, 0.37254901960784315, 0.0, 1.0), (1.0, 0.3803921568627451, 0.0, 1.0), (1.0, 0.38823529411764707, 0.0, 1.0), (1.0, 0.396078431372549, 0.0, 1.0), (1.0, 0.403921568627451, 0.0, 1.0), (1.0, 0.4117647058823529, 0.0, 1.0), (1.0, 0.4196078431372549, 0.0, 1.0), (1.0, 0.42745098039215684, 0.0, 1.0), (1.0, 0.43529411764705883, 0.0, 1.0), (1.0, 0.44313725490196076, 0.0, 1.0), (1.0, 0.45098039215686275, 0.0, 1.0), (1.0, 0.4588235294117647, 0.0, 1.0), (1.0, 0.4666666666666667, 0.0, 1.0), (1.0, 0.4745098039215686, 0.0, 1.0), (1.0, 0.4823529411764706, 0.0, 1.0), (1.0, 0.49019607843137253, 0.0, 1.0), (1.0, 0.4980392156862745, 0.0, 1.0), (1.0, 0.5058823529411764, 0.0, 1.0), (1.0, 0.5137254901960784, 0.0, 1.0), (1.0, 0.5215686274509804, 0.0, 1.0), (1.0, 0.5294117647058824, 0.0, 1.0), (1.0, 0.5372549019607843, 0.0, 1.0), (1.0, 0.5450980392156862, 0.0, 1.0), (1.0, 0.5529411764705883, 0.0, 1.0), (1.0, 0.5607843137254902, 0.0, 1.0), (1.0, 0.5686274509803921, 0.0, 1.0), (1.0, 0.5764705882352941, 0.0, 1.0), (1.0, 0.5843137254901961, 0.0, 1.0), (1.0, 0.592156862745098, 0.0, 1.0), (1.0, 0.6, 0.0, 1.0), (1.0, 0.6078431372549019, 0.0, 1.0), (1.0, 0.615686274509804, 0.0, 1.0), (1.0, 0.6235294117647059, 0.0, 1.0), (1.0, 0.6313725490196078, 0.0, 1.0), (1.0, 0.6392156862745098, 0.0, 1.0), (1.0, 0.6470588235294118, 0.0, 1.0), (1.0, 0.6549019607843137, 0.0, 1.0), (1.0, 0.6627450980392157, 0.0, 1.0), (1.0, 0.6705882352941176, 0.0, 1.0), (1.0, 0.6784313725490196, 0.0, 1.0), (1.0, 0.6862745098039216, 0.0, 1.0), (1.0, 0.6941176470588235, 0.0, 1.0), (1.0, 0.7019607843137254, 0.0, 1.0), (1.0, 0.7098039215686275, 0.0, 1.0), (1.0, 0.7176470588235294, 0.0, 1.0)]
-
-	green = [(0.6509803921568628, 1.0, 0.30980392156862746, 1.0), (0.6431372549019608, 1.0, 0.30980392156862746, 1.0), (0.6352941176470588, 1.0, 0.30980392156862746, 1.0), (0.6274509803921569, 1.0, 0.30980392156862746, 1.0), (0.6196078431372549, 1.0, 0.30980392156862746, 1.0), (0.611764705882353, 1.0, 0.30980392156862746, 1.0), (0.6039215686274509, 1.0, 0.30980392156862746, 1.0), (0.596078431372549, 1.0, 0.30980392156862746, 1.0), (0.5882352941176471, 1.0, 0.30980392156862746, 1.0), (0.5803921568627451, 1.0, 0.30980392156862746, 1.0), (0.5725490196078431, 1.0, 0.30980392156862746, 1.0), (0.5647058823529412, 1.0, 0.30980392156862746, 1.0), (0.5568627450980392, 1.0, 0.30980392156862746, 1.0), (0.5490196078431373, 1.0, 0.30980392156862746, 1.0), (0.5411764705882353, 1.0, 0.30980392156862746, 1.0),(0.5333333333333333, 1.0, 0.30980392156862746, 1.0), (0.5254901960784314, 1.0, 0.30980392156862746, 1.0), (0.5176470588235295, 1.0, 0.30980392156862746, 1.0), (0.5098039215686274, 1.0, 0.30980392156862746, 1.0)]# , (0.5019607843137255, 1.0, 0.30980392156862746, 1.0), (0.49411764705882355, 1.0, 0.30980392156862746, 1.0), (0.48627450980392156, 1.0, 0.30980392156862746, 1.0), (0.47843137254901963, 1.0, 0.30980392156862746, 1.0), (0.47058823529411764, 1.0, 0.30980392156862746, 1.0), (0.4627450980392157, 1.0, 0.30980392156862746, 1.0), (0.4549019607843137, 1.0, 0.30980392156862746, 1.0), (0.4470588235294118, 1.0, 0.30980392156862746, 1.0), (0.4392156862745098, 1.0, 0.30980392156862746, 1.0), (0.43137254901960786, 1.0, 0.30980392156862746, 1.0), (0.4235294117647059, 1.0, 0.30980392156862746, 1.0), (0.41568627450980394, 1.0, 0.30980392156862746, 1.0), (0.40784313725490196, 1.0, 0.30980392156862746, 1.0), (0.4, 1.0, 0.30980392156862746, 1.0)
+        orange=[(1.0, 0.3176470588235294, 0.0, 1.0), (1.0, 0.3254901960784314, 0.0, 1.0), (1.0, 0.3333333333333333, 0.0, 1.0), (1.0, 0.3411764705882353, 0.0, 1.0), (1.0, 0.34901960784313724, 0.0, 1.0), (1.0, 0.3568627450980392, 0.0, 1.0), (1.0, 0.36470588235294116, 0.0, 1.0), (1.0, 0.37254901960784315, 0.0, 1.0), (1.0, 0.3803921568627451, 0.0, 1.0), (1.0, 0.38823529411764707, 0.0, 1.0), (1.0, 0.396078431372549, 0.0, 1.0), (1.0, 0.403921568627451, 0.0, 1.0), (1.0, 0.4117647058823529, 0.0, 1.0), (1.0, 0.4196078431372549, 0.0, 1.0), (1.0, 0.42745098039215684, 0.0, 1.0), (1.0, 0.43529411764705883, 0.0, 1.0), (1.0, 0.44313725490196076, 0.0, 1.0), (1.0, 0.45098039215686275, 0.0, 1.0), (1.0, 0.4588235294117647, 0.0, 1.0), (1.0, 0.4666666666666667, 0.0, 1.0), (1.0, 0.4745098039215686, 0.0, 1.0), (1.0, 0.4823529411764706, 0.0, 1.0), (1.0, 0.49019607843137253, 0.0, 1.0), (1.0, 0.4980392156862745, 0.0, 1.0), (1.0, 0.5058823529411764, 0.0, 1.0), (1.0, 0.5137254901960784, 0.0, 1.0), (1.0, 0.5215686274509804, 0.0, 1.0), (1.0, 0.5294117647058824, 0.0, 1.0), (1.0, 0.5372549019607843, 0.0, 1.0), (1.0, 0.5450980392156862, 0.0, 1.0), (1.0, 0.5529411764705883, 0.0, 1.0), (1.0, 0.5607843137254902, 0.0, 1.0), (1.0, 0.5686274509803921, 0.0, 1.0), (1.0, 0.5764705882352941, 0.0, 1.0), (1.0, 0.5843137254901961, 0.0, 1.0), (1.0, 0.592156862745098, 0.0, 1.0), (1.0, 0.6, 0.0, 1.0), (1.0, 0.6078431372549019, 0.0, 1.0), (1.0, 0.615686274509804, 0.0, 1.0), (1.0, 0.6235294117647059, 0.0, 1.0), (1.0, 0.6313725490196078, 0.0, 1.0), (1.0, 0.6392156862745098, 0.0, 1.0), (1.0, 0.6470588235294118, 0.0, 1.0), (1.0, 0.6549019607843137, 0.0, 1.0), (1.0, 0.6627450980392157, 0.0, 1.0), (1.0, 0.6705882352941176, 0.0, 1.0), (1.0, 0.6784313725490196, 0.0, 1.0), (1.0, 0.6862745098039216, 0.0, 1.0), (1.0, 0.6941176470588235, 0.0, 1.0), (1.0, 0.7019607843137254, 0.0, 1.0), (1.0, 0.7098039215686275, 0.0, 1.0), (1.0, 0.7176470588235294, 0.0, 1.0)]
+        green = [(0.6509803921568628, 1.0, 0.30980392156862746, 1.0), (0.6431372549019608, 1.0, 0.30980392156862746, 1.0), (0.6352941176470588, 1.0, 0.30980392156862746, 1.0), (0.6274509803921569, 1.0, 0.30980392156862746, 1.0), (0.6196078431372549, 1.0, 0.30980392156862746, 1.0), (0.611764705882353, 1.0, 0.30980392156862746, 1.0), (0.6039215686274509, 1.0, 0.30980392156862746, 1.0), (0.596078431372549, 1.0, 0.30980392156862746, 1.0), (0.5882352941176471, 1.0, 0.30980392156862746, 1.0), (0.5803921568627451, 1.0, 0.30980392156862746, 1.0), (0.5725490196078431, 1.0, 0.30980392156862746, 1.0), (0.5647058823529412, 1.0, 0.30980392156862746, 1.0), (0.5568627450980392, 1.0, 0.30980392156862746, 1.0), (0.5490196078431373, 1.0, 0.30980392156862746, 1.0), (0.5411764705882353, 1.0, 0.30980392156862746, 1.0),(0.5333333333333333, 1.0, 0.30980392156862746, 1.0), (0.5254901960784314, 1.0, 0.30980392156862746, 1.0), (0.5176470588235295, 1.0, 0.30980392156862746, 1.0), (0.5098039215686274, 1.0, 0.30980392156862746, 1.0)]# , (0.5019607843137255, 1.0, 0.30980392156862746, 1.0), (0.49411764705882355, 1.0, 0.30980392156862746, 1.0), (0.48627450980392156, 1.0, 0.30980392156862746, 1.0), (0.47843137254901963, 1.0, 0.30980392156862746, 1.0), (0.47058823529411764, 1.0, 0.30980392156862746, 1.0), (0.4627450980392157, 1.0, 0.30980392156862746, 1.0), (0.4549019607843137, 1.0, 0.30980392156862746, 1.0), (0.4470588235294118, 1.0, 0.30980392156862746, 1.0), (0.4392156862745098, 1.0, 0.30980392156862746, 1.0), (0.43137254901960786, 1.0, 0.30980392156862746, 1.0), (0.4235294117647059, 1.0, 0.30980392156862746, 1.0), (0.41568627450980394, 1.0, 0.30980392156862746, 1.0), (0.40784313725490196, 1.0, 0.30980392156862746, 1.0), (0.4, 1.0, 0.30980392156862746, 1.0)
 
         colors= colors[:20]+orange+colors[49:]+green # len(green)=19, len(orange)=52
         #plt.cm.jet() has 256 different colors.
@@ -326,12 +336,15 @@ class qrs:
         plt.colorbar(heatmap)
         plt.show()
 
-    def displaySp(self, x, y, matrix_sp):
+    def displaySp(self, results):
+        x, y = self.timelist, self.d_interval
+        if self.matrix_sr is None:
+            self.initMatrix( results )
         # darker colors indicates higher sensibility
 
         #we do not want to display nan values. So we mask nan values
         #there is nan values because some parameter combinations are not valid
-        masked_array = np.ma.array (matrix_sp, mask=np.isnan(matrix_sp))
+        masked_array = np.ma.array( self.matrix_sp, mask = np.isnan(self.matrix_sp) )
         #We could do our colormap with discrete (listed) colors but LinearSegmentedColormap is better
         #cMap = ListedColormap(['#FE2E2E', '#FE642E', '#FE9A2E', '#FACC2E', '#FFFF00', '#F3F781', '#C8FE2E', '#00FF00', '#01DF01'])
 
