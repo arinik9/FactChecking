@@ -33,5 +33,8 @@ if __name__ == '__main__':
     obj.closeDb()
 
     print( obj.CA_tr(-0.1, results) )
-    obj.displaySr(results)
+    res = obj.CA_po(5,results)
+    print res
+
+    #obj.displaySr(results)
     #obj.displaySp(results)

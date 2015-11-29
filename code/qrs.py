@@ -72,7 +72,7 @@ class qrs:
     def openDb(self, conf_path):
         conf = ConfigParser.ConfigParser()
         conf.read( conf_path )
-        self.db = MySQLdb.connect( 
+        self.db = MySQLdb.connect(
             conf.get('DB', 'host'),
             conf.get('DB', 'user'),
             conf.get('DB', 'password'),
@@ -230,6 +230,33 @@ class qrs:
                     subset_a.append( [sp, sr, (t,w,d)] ) # just for the first insert
 
         return subset_a
+
+
+    def CA_po(self, k, results):
+    # po: pareto-optimal
+    # k: nb of results for output with highest sensibility
+        subset_a = []
+        for result in results:
+            t, w, d, r = result[0:4]
+            sr = self.SR(r)
+            sp = self.SP(w,d,t)
+            if len(subset_a)>0:
+                add = True
+                for a in subset_a:
+                    if sp>a[0] and sr<a[1]:
+                        subset_a.remove(a)
+                    elif sp<a[0] and sr>a[1]:
+                        add = False
+                        break
+                if add:
+                    subset_a.append((sp, sr, (t,w,d)))
+            else: # len(subset_a) == 0 => just for the first insert
+                subset_a.append((sp, sr, (t,w,d)))
+
+        subset_a.sort(key=lambda x: x[0], reverse=True) #ordering by SP
+        return  [i[2] for i in subset_a[:k]]#just extract parameter information
+
+
     def initMatrix(self, results):
         self.matrix_sr = [np.nan] * len( self.d_interval )
         self.matrix_sp = [np.nan] * len( self.d_interval )
