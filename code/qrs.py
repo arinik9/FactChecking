@@ -380,7 +380,7 @@ class qrs:
 
     def displaySr(self, results):
         if len(self.w_interval)>1:
-            return "Too much width values. Fixe w to some value. [article.py, line 21]"
+            return "Too much width values. Fixe w to some value. [article.py, line 21 or main.py, line 27]"
         x, y = self.timelist, self.d_interval
         if self.matrix_sr is None:
             self.initMatrix( results )
@@ -448,7 +448,7 @@ class qrs:
 
     def displaySp(self, results):
         if len(self.w_interval)>1:
-            return "Too much width values. Fixe w to some value. [article.py, line 21]"
+            return "Too much width values. Fixe w to some value. [article.py, line 21 or main.py, line 27]"
         x, y = self.timelist, self.d_interval
         if self.matrix_sr is None:
             self.initMatrix( results )

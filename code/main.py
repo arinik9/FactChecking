@@ -24,8 +24,9 @@ if __name__ == '__main__':
     obj = qrs( query, t0, w0, d0, r0, "increasing", limit_min )
 
     times = ['2011-01-01', '2015-08-01']
-    widths = [30]
-    durations = range(20,70)
+    widths = range(25,36)
+    #widths = [30]
+    durations = range(20,41)
     obj.initParameters( times, widths, durations )
 
     levels = [(1,1), (2.71, 60)]
@@ -36,8 +37,24 @@ if __name__ == '__main__':
 # Compute Results
     obj.openDb( conf_path )
     results = obj.execute()
-
     obj.closeDb()
 
-    obj.displaySr(results)
-    #obj.displaySp(results)
+    print("\n")
+    print("I changed the width values. Now: ", widths)
+
+    # it is difficult to find an appropriate threshold for RE and CA
+    print("\nCA_po:")
+    print( obj.CA_po(5, results) ) # first 5 items
+
+    print("\nRE_po:")
+    print( obj.RE_po(5, results) )
+
+    measures = obj.checkClaimQuality(results)
+    print "\nfairness: ", measures["fairness"]
+    print "robustness: ", measures["robustness"]
+    print "uniqueness: ", measures["uniqueness"]
+
+    #TODO in heatmap, it would be nice if we can fixe 0 values to yellow
+    #But we should not keep the same colors in Giuliani's heatmaps
+    print(obj.displaySr(results))
+    print(obj.displaySp(results))
