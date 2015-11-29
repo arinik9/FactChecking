@@ -218,50 +218,41 @@ class qrs:
 
         return subset_a
 
-    def CA_tr(self, threshold_r, query):
-        results = []
-        parameters = self.getP()
-        while parameters != -1:
-            t = parameters[0]
-            w = parameters[1]
-            d = parameters[2]
-            #print(fill_params(query, t, str(w), str(d)) )
-            self.db_cursor.execute( fill_params(query, t, str(w), str(d)) )
-            rows = self.db_cursor.fetchall()
-            for row in rows:
-                if row[0] is not None:
-                    if self.computeSrScore(row[0]) < threshold_r:
-                        results = self.exclude_p(results, parameters)
-            parameters = self.getP()
-        return results
+    def CA_tr(self, threshold_r, results):
+        subset_a = []
+        for result in results:
+            t = result[0]
+            w = result[1]
+            d = result[2]
+            sr = result[3]
+            if self.computeSrScore(sr) < threshold_r:
+                parameters = (t,w,d)
+                subset_a = self.exclude_p(subset_a, parameters)
+        return subset_a
 
-    def CA_tp(self, threshold_p, query):
+    def CA_tp(self, threshold_p, results):
         #This method returns a list. The first element of this list is an item with the lowest SR value
         #That is why we add at the beginning of the list each time
         subset_a = []
-        parameters = self.getP()
         min_sr=0
-        while parameters != -1:
-            t = parameters[0]
-            w = parameters[1]
-            d = parameters[2]
-            self.db_cursor.execute( fill_params(query, t, str(w), str(d)) )
-            rows = self.db_cursor.fetchall()
-            for row in rows:
-                if row[0] is not None:
-                    sr = self.computeSrScore(row[0])
-                    sp=self.computeSpScore(w,d,t)
-                    if sp > threshold_p:
-                        sub_list = map(lambda x: x[1], subset_a) # we need the lowest SR value
-                        if len(sub_list)>0: # sub_list will be empty at the beginning
-                            min_sr=min(sub_list)
-                            if min_sr>sr:
-                                subset_a.insert(0,(sp, sr, (t,w,d)))#adding to beggining of the list
-                        else:
-                            subset_a.append((sp, sr, (t,w,d)))
+        for result in results:
+            t = result[0]
+            w = result[1]
+            d = result[2]
+            sr = result[3] # float
+            sr_score = self.computeSrScore(sr)
+            sp_score = self.computeSpScore(w,d,t)
+            if sp_score > threshold_p:
+                sub_list = map(lambda x: x[1], subset_a) # we need the lowest SR value
+                if len(sub_list)>0: # sub_list will be empty at the beginning
+                    min_sr=min(sub_list)
+                    if min_sr>sr_score:
+                        subset_a.insert(0,(sp_score, sr_score, (t,w,d)))#adding to beggining of the list
+                else:
+                    subset_a.append((sp_score, sr_score, (t,w,d))) # just for the first insert
 
-            parameters = self.getP()
         return subset_a
+
 
     def displaySr(self, x, y, matrix_sr):
         #interesting source: http://stackoverflow.com/questions/15908371/matplotlib-colorbars-and-its-text-labels

@@ -84,11 +84,11 @@ if __name__ == '__main__':
 
     threshold_r = -0.2
     print("\nCA_tr with the threshold: "+str(threshold_r))
-    print(obj.CA_tr(threshold_r, query))
+    print(obj.CA_tr(threshold_r, results)) #results obtained by executeQuery()
 
     threshold_p = 0.2
     print("\nCA_tp with the threshold: "+str(threshold_p))
-    print(obj.CA_tp(threshold_p, query))
+    print(obj.CA_tp(threshold_p, results)) #results obtained by executeQuery()
     #if threshold_r == -0.7, the result would be [[2010, 6, 8]]
     #if threshold_r == -0.2, the result would be [[2001, 6, 4]]
     obj.closeDb()
