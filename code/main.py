@@ -38,6 +38,6 @@ if __name__ == '__main__':
     results = obj.execute()
 
     obj.closeDb()
-    
+
     obj.displaySr(results)
     #obj.displaySp(results)

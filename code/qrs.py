@@ -203,49 +203,32 @@ class qrs:
 
         return subset_a
 
-    def CA_tr(self, threshold_r, query):
-        results = []
-        parameters = self.getP()
-        while parameters != -1:
-            t = parameters[0]
-            w = parameters[1]
-            d = parameters[2]
-            #print(fill_params(query, t, str(w), str(d)) )
-            self.db_cursor.execute( fill_params(query, t, str(w), str(d)) )
-            rows = self.db_cursor.fetchall()
-            for row in rows:
-                if row[0] is not None:
-                    if self.SR(row[0]) < threshold_r:
-                        results = self.exclude_p(results, parameters)
-            parameters = self.getP()
-        return results
-
-    def CA_tp(self, threshold_p, query):
-        #This method returns a list. The first element of this list is an item with the lowest SR value
-        #That is why we add at the beginning of the list each time
+    def CA_tr(self, threshold_r, results):
         subset_a = []
-        parameters = self.getP()
-        min_sr=0
-        while parameters != -1:
-            t = parameters[0]
-            w = parameters[1]
-            d = parameters[2]
-            self.db_cursor.execute( fill_params(query, t, str(w), str(d)) )
-            rows = self.db_cursor.fetchall()
-            for row in rows:
-                if row[0] is not None:
-                    sr = self.SR(row[0])
-                    sp=self.SP(w,d,t)
-                    if sp > threshold_p:
-                        sub_list = map(lambda x: x[1], subset_a) # we need the lowest SR value
-                        if len(sub_list)>0: # sub_list will be empty at the beginning
-                            min_sr=min(sub_list)
-                            if min_sr>sr:
-                                subset_a.insert(0,(sp, sr, (t,w,d)))#adding to beggining of the list
-                        else:
-                            subset_a.append((sp, sr, (t,w,d)))
+        for result in results:
+            if self.SR( result[3] ) < threshold_r:
+                subset_a = self.exclude_p( subset_a, result[0:3] )
+        return subset_a
 
-            parameters = self.getP()
+    def CA_tp(self, threshold_p, results):
+    #This method returns a list. The first element of this list is an item with the lowest SR value
+    #That is why we add at the beginning of the list each time
+        subset_a = []
+        min_sr = 0
+        for result in results:
+            t, w, d, r = result[0:4]
+            sr = self.SR(r)
+            sp = self.SP(w,d,t)
+            if sp > threshold_p:
+                sub_list = map( lambda x: x[1], subset_a )
+                if len(sub_list) > 0:
+                # sub_list will be empty at the beginning
+                    min_sr = min(sub_list)
+                    if min_sr > sr:
+                        subset_a.insert( 0, [sp, sr, (t,w,d)] )#adding to beggining of the list
+                else:
+                    subset_a.append( [sp, sr, (t,w,d)] ) # just for the first insert
+
         return subset_a
     def initMatrix(self, results):
         self.matrix_sr = [np.nan] * len( self.d_interval )

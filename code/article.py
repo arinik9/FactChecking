@@ -32,5 +32,6 @@ if __name__ == '__main__':
     results = obj.execute()
     obj.closeDb()
 
-    #obj.displaySr(results)
-    obj.displaySp(results)
+    print( obj.CA_tr(-0.1, results) )
+    obj.displaySr(results)
+    #obj.displaySp(results)
