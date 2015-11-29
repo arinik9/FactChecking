@@ -32,9 +32,17 @@ if __name__ == '__main__':
     results = obj.execute()
     obj.closeDb()
 
+    print("CA_tr:")
     print( obj.CA_tr(-0.1, results) )
-    res = obj.CA_po(5,results)
-    print res
+    print("CA_tp:")
+    print( obj.CA_tp(0.2, results) )
+    print("CA_po:")
+    print( obj.CA_po(5, results) )
+
+    measures = obj.checkClaimQuality(results)
+    print "fairness: ", measures["fairness"]
+    print "robustness: ", measures["robustness"]
+    print "uniqueness: ", measures["uniqueness"]
 
     #obj.displaySr(results)
     #obj.displaySp(results)

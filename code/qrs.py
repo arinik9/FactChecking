@@ -257,6 +257,34 @@ class qrs:
         return  [i[2] for i in subset_a[:k]]#just extract parameter information
 
 
+    def checkClaimQuality(self, results):
+        # low uniqueness means is easy to find perturbed claims that are at least as strong as the original clame
+        # low robustness means the original claim can be easily weakend
+        # fairness of 0: the claim is unbiased, positive fairness: the claim is understated, negative claim is overstated
+
+        fairness = 0.0
+        robustness = 0.0
+        uniqueness = 0.0
+        total_parameters_nb = float(abs(len(results)))
+
+        for result in results:
+            t, w, d, r = result[0:4]
+            sr = self.SR(r)
+            sp = self.SP(w,d,t)
+            fairness += sr * sp
+            robustness += sp * (min(0, sr))**2
+            ### Uniqueness ###
+            one_indicator_function = lambda x: 1 if x<0  else 0
+            uniqueness += 1/total_parameters_nb * one_indicator_function(sr)
+
+        measures = {}
+        measures["fairness"] = fairness
+        measures["robustness"] = math.exp(-robustness)
+        measures["uniqueness"] = uniqueness
+
+        return measures
+
+
     def initMatrix(self, results):
         self.matrix_sr = [np.nan] * len( self.d_interval )
         self.matrix_sp = [np.nan] * len( self.d_interval )
