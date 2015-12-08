@@ -18,8 +18,8 @@ if __name__ == '__main__':
     obj = qrs( query, t0, w0, d0, r0, "increasing", limit_min)
 
     times = [1995, 2012]
-    widths = [1,2,3,4,5,6,7,8,9]
-    #widths = [6]
+    #widths = [1,2,3,4,5,6,7,8,9]
+    widths = [6]
     durations = range(1,19)
     obj.initParameters( times, widths, durations )
 
@@ -48,4 +48,4 @@ if __name__ == '__main__':
     print "uniqueness: ", measures["uniqueness"]
 
     print(obj.displaySr(results))
-    print(obj.displaySp(results))
+    #print(obj.displaySp(results))

@@ -188,8 +188,8 @@ class qrs:
         """ SR = r/r0 - 1 for increasing rate
             SR = r0/r - 1 for decreasing rate"""
         if self.claim_type == "increasing":
-            return round((float(r) / float(self.r0)) - 1, 3)
-        return round((float(self.r0) / float(r)) - 1, 3)
+            return round( (float(r) / float(self.r0)) - 1, 3 )
+        return round( (float(self.r0) / float(r)) - 1, 3 )
 
     def exclude_p(self, subset_a, p):
         sp = self.SP(p[1], p[2], p[0])
@@ -204,9 +204,10 @@ class qrs:
         return subset_a
 
     def CA_tr(self, threshold_r, results):
-        if threshold_r>0:
-            return "please give a negatif threshold"
         subset_a = []
+        if threshold_r > 0:
+            print("please give a negatif threshold")
+            return -1
         for result in results:
             if self.SR( result[3] ) < threshold_r:
                 subset_a = self.exclude_p( subset_a, result[0:3] )
@@ -232,7 +233,6 @@ class qrs:
                     subset_a.append( [sp, sr, (t,w,d)] ) # just for the first insert
 
         return [i[2] for i in subset_a]
-
 
     def CA_po(self, k, results):
     # po: pareto-optimal
@@ -261,7 +261,6 @@ class qrs:
         subset_a.sort(key=lambda x: x[0], reverse=True) #ordering by SP
         #return  [i[2] for i in subset_a[:k]]#just extract parameter information
         return  subset_a[:k]
-
 
     def RE_tr(self, threshold_r, results):
         if threshold_r<0:
@@ -292,7 +291,6 @@ class qrs:
                     subset_a.append( [sp, sr, (t,w,d)] ) # just for the first insert
 
         return [i[2] for i in subset_a]
-
 
     def RE_po(self, k, results):
     # po: pareto-optimal
@@ -325,7 +323,6 @@ class qrs:
         # avec la 2eme manipulation (ordering) on obtient les memes valeurs que celles de l'article
         return k_first_items
 
-
     def checkClaimQuality(self, results):
         # low uniqueness means is easy to find perturbed claims that are at least as strong as the original clame
         # low robustness means the original claim can be easily weakend
@@ -353,7 +350,7 @@ class qrs:
 
         return measures
 
-
+# SR and SP Display
     def initMatrix(self, results):
         self.matrix_sr = [np.nan] * len( self.d_interval )
         self.matrix_sp = [np.nan] * len( self.d_interval )
@@ -379,8 +376,9 @@ class qrs:
         self.matrix_sp = np.delete( self.matrix_sp, 0, 1 )
 
     def displaySr(self, results):
-        if len(self.w_interval)>1:
-            return "Too much width values. Fixe w to some value. [article.py, line 21 or main.py, line 27]"
+        if len(self.w_interval) > 1:
+            print("Too many width values. Set w to some value.")
+            return -1
         x, y = self.timelist, self.d_interval
         if self.matrix_sr is None:
             self.initMatrix( results )
@@ -443,12 +441,24 @@ class qrs:
             max_limit=0.40
         heatmap.set_clim(vmin=min_limit, vmax=max_limit)
         plt.colorbar(heatmap)
+        
+        # draw a thick red hline at y=0 that spans the xrange
+        unit = 1.0 / (self.t_interval[-1] - self.t_interval[0])
+        middle = float(self.t0 - self.t_interval[0]) / float(self.t_interval[-1] - self.t_interval[0]) + unit
+        plt.axhline(y=self.d0 + 0.5, xmin=middle-unit/2, xmax=middle+unit/2, linewidth=4, color='b')
+
+        start = self.t0 - self.t_interval[0] + 1.5
+        unit = 1.0 / (self.d_interval[-1] - self.d_interval[0])
+        middle = float(self.d0 - self.d_interval[0]) / float(self.d_interval[-1] - self.d_interval[0]) + unit
+        plt.axvline(x=start, ymin=middle-unit/2, ymax=middle+unit/2, linewidth=4, color='b')
+
         plt.show()
         return True
 
     def displaySp(self, results):
-        if len(self.w_interval)>1:
-            return "Too much width values. Fixe w to some value. [article.py, line 21 or main.py, line 27]"
+        if len(self.w_interval) > 1:
+            print("Too many width values. Set w to some value.")
+            return -1
         x, y = self.timelist, self.d_interval
         if self.matrix_sr is None:
             self.initMatrix( results )

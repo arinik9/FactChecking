@@ -24,8 +24,8 @@ if __name__ == '__main__':
     obj = qrs( query, t0, w0, d0, r0, "increasing", limit_min )
 
     times = ['2011-01-01', '2015-08-01']
-    widths = range(25,36)
-    #widths = [30]
+    #widths = range(25,36)
+    widths = [30]
     durations = range(20,41)
     obj.initParameters( times, widths, durations )
 
