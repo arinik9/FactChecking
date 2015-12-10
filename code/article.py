@@ -48,4 +48,4 @@ if __name__ == '__main__':
     print "uniqueness: ", measures["uniqueness"]
 
     print(obj.displaySr(results))
-    #print(obj.displaySp(results))
+    print(obj.displaySp(results))

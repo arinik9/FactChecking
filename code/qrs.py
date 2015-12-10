@@ -378,7 +378,8 @@ class qrs:
         self.matrix_sp = np.delete( self.matrix_sp, 0, 1 )
 
 
-    def shiftedColorMap(self, cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
+    def shiftedColorMap(self, cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap', intensity_up=127, intensity_down=128):
+	# intensity_up + intensity_down should be 257. Because we initialize 'reg_index' with 257 pixels
         cdict = {
             'red': [],
             'green': [],
@@ -386,15 +387,14 @@ class qrs:
             'alpha': []
         }
 
-        print "GIRDI"
 
         # regular index to compute the colors
         reg_index = np.linspace(start, stop, 257)
 
         # shifted index to match the data
         shift_index = np.hstack([
-            np.linspace(0.0, midpoint, 160, endpoint=False), 
-            np.linspace(midpoint, 1.0, 97, endpoint=True)
+            np.linspace(0.0, midpoint, intensity_up, endpoint=False), 
+            np.linspace(midpoint, 1.0, intensity_down, endpoint=True)
         ])
 
         for ri, si in zip(reg_index, shift_index):
@@ -450,11 +450,10 @@ class qrs:
         if max_limit <0:
             max_limit=0.40
 
-        print max_limit, min_limit
         cMap = LinearSegmentedColormap.from_list('cMap', colors,  N=109) #N=90+19
         cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
 	orig_cmap = cMap
-	shifted_cmap = self.shiftedColorMap(orig_cmap, midpoint=(abs(min_limit)/float(max_limit+abs(min_limit))), name='shifted')
+	shifted_cmap = self.shiftedColorMap(orig_cmap, midpoint=(abs(min_limit)/float(max_limit+abs(min_limit))), name='shifted', intensity_up=160, intensity_down=97)
 
         fig = plt.figure(figsize=(16,16)) # with (16,16), it is better for Hollande&Sarkozy's claim
         grid = AxesGrid(fig, 111, nrows_ncols=(1, 1), axes_pad=0.5,
@@ -464,10 +463,7 @@ class qrs:
 
         im2 = grid[0].imshow(masked_array, origin="lower", interpolation="None", cmap=shifted_cmap)
 	grid.cbar_axes[0].colorbar(im2)
-	grid[0].set_title('Recentered cmap with function', fontsize=8)
-
-
-
+	grid[0].set_title('SR', fontsize=14)
 
 	for ax in grid:
             ax.set_xticks(np.arange(len(x))-0.5)
@@ -526,28 +522,8 @@ class qrs:
 
         fire_color = list(reversed(fire_color))
         fire = map(lambda x: (x[0]/float(255),x[1]/float(255),x[2]/float(255)),fire_color)
-        fire=list(reversed(fire))
-        cMap = LinearSegmentedColormap.from_list('cMap', fire, N=len(fire))
-        fig, ax = plt.subplots()
-        #fig, ax = plt.subplots(1,1, figsize=(6,6))
-        #heatmap = ax.pcolor(masked_array, cmap=cMap)
-        #heatmap = ax.pcolormesh(masked_array, cmap=plt.get_cmap("afmhot"))
-        heatmap = ax.pcolormesh(masked_array, cmap=cMap)
-        ax.set_xticks(range(len(x)))
-        if type(self.t_interval[0]) == type(str):
-            ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
-        else:
-            ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
-        ax.tick_params(axis='x', labelsize=8)
-        ax.set_yticks(np.arange(len(y)))
-        ax.set_yticklabels(map(lambda i: str(i), y))
-        #plt.autoscale()
-        ax.grid(True)
+        colors=list(reversed(fire))
 
-        fig.suptitle('Parameter of Sensibility')
-
-        #we limit colormap values. we force min_limit to -1 in case of no existence of negative values
-        #because positive values should match greener colors
         max_limit=0
         min_limit=0
         for i in xrange(len(masked_array)):
@@ -556,11 +532,38 @@ class qrs:
                     max_limit=masked_array[i][j]
                 if masked_array[i][j] < min_limit:
                     min_limit=masked_array[i][j]
+
         if max_limit <0:
             max_limit=0.40
         if min_limit >0:
-            min_limit=-1
-        heatmap.set_clim(vmin=min_limit, vmax=max_limit)
-        plt.colorbar(heatmap)
+            min_limit=0
+
+        cMap = LinearSegmentedColormap.from_list('cMap', colors,  N=len(fire)) #N=90+19
+        cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
+	orig_cmap = cMap
+	shifted_cmap = self.shiftedColorMap(orig_cmap, midpoint=(abs(min_limit)/float(max_limit+abs(min_limit))), name='shifted', intensity_up=15, intensity_down=242)
+
+        fig = plt.figure(figsize=(16,16)) # with (16,16), it is better for Hollande&Sarkozy's claim
+        grid = AxesGrid(fig, 111, nrows_ncols=(1, 1), axes_pad=0.5,
+                label_mode="1", share_all=True,
+                cbar_location="right", cbar_mode="each",
+                cbar_size="7%", cbar_pad="2%")
+
+        im2 = grid[0].imshow(masked_array, origin="lower", interpolation="None", cmap=shifted_cmap)
+	grid.cbar_axes[0].colorbar(im2)
+	grid[0].set_title('SP', fontsize=14)
+
+	for ax in grid:
+            ax.set_xticks(np.arange(len(x))-0.5)
+            if type(self.t_interval[0]) == type(str):
+                ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
+            else:
+                ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
+            ax.tick_params(axis='x', labelsize=8)
+            ax.set_yticks(np.arange(len(y))+0.5)
+            ax.set_yticklabels(map(lambda i: str(i), y))
+            #plt.autoscale()
+            ax.grid(True)
+
         plt.show()
         return True
