@@ -3,10 +3,12 @@ import math, Queue, ConfigParser, MySQLdb
 import numpy as np
 import matplotlib.pyplot as plt
 
+import matplotlib
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.pyplot import figure
 from datetime import datetime, timedelta
+from mpl_toolkits.axes_grid1 import AxesGrid
 
 # Utils
 def sub_month(n, date):
@@ -375,6 +377,40 @@ class qrs:
         self.matrix_sr = np.delete( self.matrix_sr, 0, 1 )
         self.matrix_sp = np.delete( self.matrix_sp, 0, 1 )
 
+
+    def shiftedColorMap(self, cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
+        cdict = {
+            'red': [],
+            'green': [],
+            'blue': [],
+            'alpha': []
+        }
+
+        print "GIRDI"
+
+        # regular index to compute the colors
+        reg_index = np.linspace(start, stop, 257)
+
+        # shifted index to match the data
+        shift_index = np.hstack([
+            np.linspace(0.0, midpoint, 160, endpoint=False), 
+            np.linspace(midpoint, 1.0, 97, endpoint=True)
+        ])
+
+        for ri, si in zip(reg_index, shift_index):
+            r, g, b, a = cmap(ri)
+
+            cdict['red'].append((si, r, r))
+            cdict['green'].append((si, g, g))
+            cdict['blue'].append((si, b, b))
+            cdict['alpha'].append((si, a, a))
+
+        newcmap = matplotlib.colors.LinearSegmentedColormap(name, cdict)
+        plt.register_cmap(cmap=newcmap)
+
+        return newcmap
+
+
     def displaySr(self, results):
         if len(self.w_interval) > 1:
             print("Too many width values. Set w to some value.")
@@ -382,9 +418,7 @@ class qrs:
         x, y = self.timelist, self.d_interval
         if self.matrix_sr is None:
             self.initMatrix( results )
-        #interesting source: http://stackoverflow.com/questions/15908371/matplotlib-colorbars-and-its-text-labels
-        #same: http://stackoverflow.com/questions/14336138/python-matplotlib-change-color-of-specified-value-in-contourf-plot-using-colorma
-        #same: http://stackoverflow.com/questions/14391959/heatmap-in-matplotlib-with-pcolor
+        #source: http://stackoverflow.com/questions/7404116/defining-the-midpoint-of-a-colormap-in-matplotlib
 
         #greener colors strengthen the claim
         #redder colors weaken the claim
@@ -396,38 +430,14 @@ class qrs:
         #cMap = ListedColormap(['#FE2E2E', '#FE642E', '#FE9A2E', '#FACC2E', '#FFFF00', '#F3F781', '#C8FE2E', '#00FF00', '#01DF01'])
 
         colors = [(plt.cm.jet(i)) for i in xrange(230,140,-1)]
-        orange=[(1.0, 0.3176470588235294, 0.0, 1.0), (1.0, 0.3254901960784314, 0.0, 1.0), (1.0, 0.3333333333333333, 0.0, 1.0), (1.0, 0.3411764705882353, 0.0, 1.0), (1.0, 0.34901960784313724, 0.0, 1.0), (1.0, 0.3568627450980392, 0.0, 1.0), (1.0, 0.36470588235294116, 0.0, 1.0), (1.0, 0.37254901960784315, 0.0, 1.0), (1.0, 0.3803921568627451, 0.0, 1.0), (1.0, 0.38823529411764707, 0.0, 1.0), (1.0, 0.396078431372549, 0.0, 1.0), (1.0, 0.403921568627451, 0.0, 1.0), (1.0, 0.4117647058823529, 0.0, 1.0), (1.0, 0.4196078431372549, 0.0, 1.0), (1.0, 0.42745098039215684, 0.0, 1.0), (1.0, 0.43529411764705883, 0.0, 1.0), (1.0, 0.44313725490196076, 0.0, 1.0), (1.0, 0.45098039215686275, 0.0, 1.0), (1.0, 0.4588235294117647, 0.0, 1.0), (1.0, 0.4666666666666667, 0.0, 1.0), (1.0, 0.4745098039215686, 0.0, 1.0), (1.0, 0.4823529411764706, 0.0, 1.0), (1.0, 0.49019607843137253, 0.0, 1.0), (1.0, 0.4980392156862745, 0.0, 1.0), (1.0, 0.5058823529411764, 0.0, 1.0), (1.0, 0.5137254901960784, 0.0, 1.0), (1.0, 0.5215686274509804, 0.0, 1.0), (1.0, 0.5294117647058824, 0.0, 1.0), (1.0, 0.5372549019607843, 0.0, 1.0), (1.0, 0.5450980392156862, 0.0, 1.0), (1.0, 0.5529411764705883, 0.0, 1.0), (1.0, 0.5607843137254902, 0.0, 1.0), (1.0, 0.5686274509803921, 0.0, 1.0), (1.0, 0.5764705882352941, 0.0, 1.0), (1.0, 0.5843137254901961, 0.0, 1.0), (1.0, 0.592156862745098, 0.0, 1.0), (1.0, 0.6, 0.0, 1.0), (1.0, 0.6078431372549019, 0.0, 1.0), (1.0, 0.615686274509804, 0.0, 1.0), (1.0, 0.6235294117647059, 0.0, 1.0), (1.0, 0.6313725490196078, 0.0, 1.0), (1.0, 0.6392156862745098, 0.0, 1.0), (1.0, 0.6470588235294118, 0.0, 1.0), (1.0, 0.6549019607843137, 0.0, 1.0), (1.0, 0.6627450980392157, 0.0, 1.0), (1.0, 0.6705882352941176, 0.0, 1.0), (1.0, 0.6784313725490196, 0.0, 1.0), (1.0, 0.6862745098039216, 0.0, 1.0), (1.0, 0.6941176470588235, 0.0, 1.0), (1.0, 0.7019607843137254, 0.0, 1.0), (1.0, 0.7098039215686275, 0.0, 1.0), (1.0, 0.7176470588235294, 0.0, 1.0)]
-        green = [(0.6509803921568628, 1.0, 0.30980392156862746, 1.0), (0.6431372549019608, 1.0, 0.30980392156862746, 1.0), (0.6352941176470588, 1.0, 0.30980392156862746, 1.0), (0.6274509803921569, 1.0, 0.30980392156862746, 1.0), (0.6196078431372549, 1.0, 0.30980392156862746, 1.0), (0.611764705882353, 1.0, 0.30980392156862746, 1.0), (0.6039215686274509, 1.0, 0.30980392156862746, 1.0), (0.596078431372549, 1.0, 0.30980392156862746, 1.0), (0.5882352941176471, 1.0, 0.30980392156862746, 1.0), (0.5803921568627451, 1.0, 0.30980392156862746, 1.0), (0.5725490196078431, 1.0, 0.30980392156862746, 1.0), (0.5647058823529412, 1.0, 0.30980392156862746, 1.0), (0.5568627450980392, 1.0, 0.30980392156862746, 1.0), (0.5490196078431373, 1.0, 0.30980392156862746, 1.0), (0.5411764705882353, 1.0, 0.30980392156862746, 1.0),(0.5333333333333333, 1.0, 0.30980392156862746, 1.0), (0.5254901960784314, 1.0, 0.30980392156862746, 1.0), (0.5176470588235295, 1.0, 0.30980392156862746, 1.0), (0.5098039215686274, 1.0, 0.30980392156862746, 1.0)]# , (0.5019607843137255, 1.0, 0.30980392156862746, 1.0), (0.49411764705882355, 1.0, 0.30980392156862746, 1.0), (0.48627450980392156, 1.0, 0.30980392156862746, 1.0), (0.47843137254901963, 1.0, 0.30980392156862746, 1.0), (0.47058823529411764, 1.0, 0.30980392156862746, 1.0), (0.4627450980392157, 1.0, 0.30980392156862746, 1.0), (0.4549019607843137, 1.0, 0.30980392156862746, 1.0), (0.4470588235294118, 1.0, 0.30980392156862746, 1.0), (0.4392156862745098, 1.0, 0.30980392156862746, 1.0), (0.43137254901960786, 1.0, 0.30980392156862746, 1.0), (0.4235294117647059, 1.0, 0.30980392156862746, 1.0), (0.41568627450980394, 1.0, 0.30980392156862746, 1.0), (0.40784313725490196, 1.0, 0.30980392156862746, 1.0), (0.4, 1.0, 0.30980392156862746, 1.0)
+        green = [(0.6509803921568628, 1.0, 0.30980392156862746, 1.0), (0.6431372549019608, 1.0, 0.30980392156862746, 1.0), (0.6352941176470588, 1.0, 0.30980392156862746, 1.0), (0.6274509803921569, 1.0, 0.30980392156862746, 1.0), (0.6196078431372549, 1.0, 0.30980392156862746, 1.0), (0.611764705882353, 1.0, 0.30980392156862746, 1.0), (0.6039215686274509, 1.0, 0.30980392156862746, 1.0), (0.596078431372549, 1.0, 0.30980392156862746, 1.0), (0.5882352941176471, 1.0, 0.30980392156862746, 1.0), (0.5803921568627451, 1.0, 0.30980392156862746, 1.0), (0.5725490196078431, 1.0, 0.30980392156862746, 1.0), (0.5647058823529412, 1.0, 0.30980392156862746, 1.0), (0.5568627450980392, 1.0, 0.30980392156862746, 1.0), (0.5490196078431373, 1.0, 0.30980392156862746, 1.0), (0.5411764705882353, 1.0, 0.30980392156862746, 1.0),(0.5333333333333333, 1.0, 0.30980392156862746, 1.0), (0.5254901960784314, 1.0, 0.30980392156862746, 1.0), (0.5176470588235295, 1.0, 0.30980392156862746, 1.0), (0.5098039215686274, 1.0, 0.30980392156862746, 1.0)]
 
-        colors= colors[:20]+orange+colors[49:]+green # len(green)=19, len(orange)=52
+        colors= colors+green # len(green)=19, total_len = 109
         #plt.cm.jet() has 256 different colors.
         #We will focus on xrange(130,230) in descending order
         #because we want that redder colors matches poor values
         #and greener colors maches high values
 
-
-        #cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
-        cMap = LinearSegmentedColormap.from_list('cMap', colors,  N=184) #N=20+52+41+19
-        cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
-        fig, ax = plt.subplots()
-        #fig, ax = plt.subplots(1,1, figsize=(6,6))
-        #heatmap = ax.pcolor(masked_array, cmap=cMap)
-        heatmap = ax.pcolormesh(masked_array, cmap=cMap)
-        ax.set_xticks(range(len(x)))
-        if type(self.t_interval[0]) == type(str):
-            ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
-        else:
-            ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
-        ax.tick_params(axis='x', labelsize=8)
-        ax.set_yticks(range(len(y)))
-        ax.set_yticklabels(map(lambda i: str(i), y))
-        plt.autoscale()
-        ax.grid(True)
-
-        fig.suptitle('Strength Result')
-
-        #we limit colormap values. we force max_limit to 0.4 in case of no existence of positive values
-        #because positive values should match greener colors
         max_limit=0
         min_limit=0
         for i in xrange(len(masked_array)):
@@ -439,9 +449,45 @@ class qrs:
 
         if max_limit <0:
             max_limit=0.40
-        heatmap.set_clim(vmin=min_limit, vmax=max_limit)
-        plt.colorbar(heatmap)
-        
+
+        print max_limit, min_limit
+        cMap = LinearSegmentedColormap.from_list('cMap', colors,  N=109) #N=90+19
+        cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
+	orig_cmap = cMap
+	shifted_cmap = self.shiftedColorMap(orig_cmap, midpoint=(abs(min_limit)/float(max_limit+abs(min_limit))), name='shifted')
+
+        fig = plt.figure(figsize=(16,16)) # with (16,16), it is better for Hollande&Sarkozy's claim
+        grid = AxesGrid(fig, 111, nrows_ncols=(1, 1), axes_pad=0.5,
+                label_mode="1", share_all=True,
+                cbar_location="right", cbar_mode="each",
+                cbar_size="7%", cbar_pad="2%")
+
+        im2 = grid[0].imshow(masked_array, origin="lower", interpolation="None", cmap=shifted_cmap)
+	grid.cbar_axes[0].colorbar(im2)
+	grid[0].set_title('Recentered cmap with function', fontsize=8)
+
+
+
+
+	for ax in grid:
+            ax.set_xticks(np.arange(len(x))-0.5)
+            if type(self.t_interval[0]) == type(str):
+                ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
+            else:
+                ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
+            ax.tick_params(axis='x', labelsize=8)
+            ax.set_yticks(np.arange(len(y))+0.5)
+            ax.set_yticklabels(map(lambda i: str(i), y))
+            #plt.autoscale()
+            ax.grid(True)
+
+
+
+	#    ax.set_yticks([])
+	#    ax.set_xticks([])
+
+        # The aprt below does not work with hollande&sarkozy's claim
+        """
         # draw a thick red hline at y=0 that spans the xrange
         unit = 1.0 / (self.t_interval[-1] - self.t_interval[0])
         middle = float(self.t0 - self.t_interval[0]) / float(self.t_interval[-1] - self.t_interval[0]) + unit
@@ -451,7 +497,7 @@ class qrs:
         unit = 1.0 / (self.d_interval[-1] - self.d_interval[0])
         middle = float(self.d0 - self.d_interval[0]) / float(self.d_interval[-1] - self.d_interval[0]) + unit
         plt.axvline(x=start, ymin=middle-unit/2, ymax=middle+unit/2, linewidth=4, color='b')
-
+	"""
         plt.show()
         return True
 
