@@ -61,7 +61,7 @@ class qrs:
         self.times=None
         self.values=None
 
-	self.conf_path = None
+        self.conf_path = None
         self.db = None
         self.db_cursor = None
         self.matrix_sr = None
@@ -78,7 +78,7 @@ class qrs:
         self.sigma_t = None
 
     def openDb(self, conf_path):
-	self.conf_path=conf_path
+        self.conf_path=conf_path
         conf = ConfigParser.ConfigParser()
         conf.read( conf_path )
         self.db = MySQLdb.connect(
