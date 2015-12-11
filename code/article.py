@@ -50,7 +50,8 @@ if __name__ == '__main__':
     print "robustness: ", measures["robustness"]
     print "uniqueness: ", measures["uniqueness"]
 
-    pos_annotations = [(6,5), (10,6), (5,5)]
+    pos_annotations_sr = [(6,5), (10,6), (5,5)]
+    pos_annotations_sp = [(6,5), (7,7), (5,5), (6,3)]
     for w in widths:
-        print(obj.displaySr(results, pos_annotations, w))
-        print(obj.displaySp(results))
+        print(obj.displaySr(results, pos_annotations_sr, w))
+        print(obj.displaySp(results, pos_annotations_sp, w))

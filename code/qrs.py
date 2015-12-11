@@ -489,7 +489,8 @@ class qrs:
         times, values = self.times, self.values
 
         # Initializing annotations on histogram
-        labels=["Claim","A","B"] # label of each annotation
+        labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
+        labels = labels_general[:len(pos_annotations)]
 
         # we get time and d values via pos_annotations
         # for instance, if annotation=(5,6), the value is (2001,6) => according to [year, adoptions]
@@ -519,10 +520,10 @@ class qrs:
                         bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
 
 
-        #Now, we generate 3 histograms (because we have 3 annotations)
-	f, (ax2, ax3, ax4) = plt.subplots(1, 3)
+        #Now, we generate len(pos_annotations) histograms (because we have len(pos_annotations) annotations)
+	f, axes = plt.subplots(1, len(pos_annotations))
 	width=0.5 # width of each bar in histogram
-        for ax, param, label in zip([ax2, ax3, ax4], parameters, labels):
+        for ax, param, label in zip(axes, parameters, labels):
             x=[]
             y=[]
             colors_hist=[]
@@ -572,7 +573,7 @@ class qrs:
         plt.show()
         return True
 
-    def displaySp(self, results):
+    def displaySp(self, results, pos_annotations, w):
         if len(self.w_interval) > 1:
             print("Too many width values. Set w to some value.")
             return -1
@@ -628,6 +629,26 @@ class qrs:
 	grid.cbar_axes[0].colorbar(im2)
 	grid[0].set_title('Relative Sensibility of Parameter Settings (SP)', fontsize=14)
 
+        # We get table values
+        # For instance, "times" is equal to 'years' and "values" is equal to 'adoptions' in the table 'nyc_adoptions'
+        times, values = self.times, self.values
+
+        # Initializing annotations on histogram
+        labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
+        labels = labels_general[:len(pos_annotations)]
+
+        # we get time and d values via pos_annotations
+        # for instance, if annotation=(5,6), the value is (2001,6) => according to [year, adoptions]
+        parameters = []
+        for pos in pos_annotations:
+            i=pos[0]
+            j=pos[1]
+            # x: time_interval, y: d_interval 
+            if not(isinstance(x[i], int)):  #Hollande&Sarkozy
+                parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
+            else:
+                parameters.append((x[i], y[j])) # corresponding parameters for each annotation
+
 	for ax in grid:
             ax.set_xticks(np.arange(len(x))-0.5)
             if type(self.t_interval[0]) == type(str):
@@ -640,5 +661,61 @@ class qrs:
             #plt.autoscale()
             ax.grid(True)
 
+            # Annotations
+            for label, xy in zip(labels, pos_annotations):
+                ax.annotate(label, xy, xytext=(20,20), size=12, textcoords="offset points",\
+                        bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
+
+
+        #Now, we generate len(pos_annotations) histograms (because we have len(pos_annotations) annotations)
+	f, axes = plt.subplots(1, len(pos_annotations))
+	width=0.5 # width of each bar in histogram
+        for ax, param, label in zip(axes, parameters, labels):
+            x=[]
+            y=[]
+            colors_hist=[]
+            w, d, t = w, param[1], param[0]
+
+            for time, val in zip(times, values): 
+                if not(isinstance(time, long)): #Hollande&Sarkozy
+                    year=datetime.combine(time, datetime.min.time())
+                    if year<=t and year>sub_month(w, t):
+                        colors_hist.append('green')
+                    elif year<=sub_month(d, t) and year>sub_month( w, sub_month(d, t)):
+                        colors_hist.append('red')
+                    else:
+                        colors_hist.append('blue')
+                else:
+                    year=time
+                    if year<=t and year>(t-w):
+                        colors_hist.append('green')
+                    elif year<=(t-d) and year>(t-d-w):
+                        colors_hist.append('red')
+                    else:
+                        colors_hist.append('blue')
+
+                x.append(str(time)[:7])
+                y.append(val)
+
+	    ax.bar(range(len(y)), y, width=width, color=colors_hist)
+	    ax.set_xticks(np.arange(len(y)) + width/2)
+	    #ax.set_xticklabels(x, rotation=270)
+	    # In order not to display all dates on x-axes, we use modulo for reduce the numbers of date
+            ax.set_xticklabels(map(lambda (i,a): str(a)[:7] if i%5==0 else "", enumerate(x)), rotation=270 ) ;
+	    ax.tick_params(axis='x', labelsize=9)
+
+	    extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none',\
+	            linewidth=0) # For adding "w,d,t" information on legend
+	    red_patch = mpatches.Patch(color='red') #adding red patch
+	    green_patch = mpatches.Patch(color='green')
+	    ax.legend([extra, red_patch, green_patch],["w= "+str(w)+", d= "+str(d)+\
+                    ", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':10})
+
+	    ax.set_title(label, fontsize=12)
+	
+            if not(isinstance(t, int)): # Hollande&Sarkozy
+	        x1,x2,y1,y2 = ax.axis()
+	        zoom_x=160
+	        ax.axis((zoom_x,x2,y1,y2)) # TODO we should find a good zoom_x
         plt.show()
         return True
