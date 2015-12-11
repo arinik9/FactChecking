@@ -39,6 +39,8 @@ if __name__ == '__main__':
     results = obj.execute()
     obj.closeDb()
 
+    obj.fetchTableValues("select mois, nb_chomeur from chomagePE;") # we need for SP and SR
+
     print("\n")
     print("I changed the width values. Now: ", widths)
 
@@ -54,7 +56,8 @@ if __name__ == '__main__':
     print "robustness: ", measures["robustness"]
     print "uniqueness: ", measures["uniqueness"]
 
-    #TODO in heatmap, it would be nice if we can fixe 0 values to yellow
-    #But we should not keep the same colors in Giuliani's heatmaps
-    print(obj.displaySr(results))
-    print(obj.displaySp(results))
+    pos_annotations = [(45,10), (45,12), (43,10)]
+    for w in widths:
+        print(obj.displaySr(results, pos_annotations, w))
+        print(obj.displaySp(results))
+

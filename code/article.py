@@ -32,6 +32,9 @@ if __name__ == '__main__':
     obj.openDb( conf_path )
     results = obj.execute()
     obj.closeDb()
+
+    obj.fetchTableValues("select year, adoptions from nyc_adoptions;") # we need for SP and SR
+
     print("\n")
     print("I changed the width values. Now: ", widths)
 
@@ -47,5 +50,7 @@ if __name__ == '__main__':
     print "robustness: ", measures["robustness"]
     print "uniqueness: ", measures["uniqueness"]
 
-    print(obj.displaySr(results))
-    print(obj.displaySp(results))
+    pos_annotations = [(6,5), (10,6), (5,5)]
+    for w in widths:
+        print(obj.displaySr(results, pos_annotations, w))
+        print(obj.displaySp(results))

@@ -2,7 +2,8 @@ import math, Queue, ConfigParser, MySQLdb
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+import matplotlib.patches as mpatches
+from matplotlib.patches import Rectangle
 import matplotlib
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import LinearSegmentedColormap
@@ -56,6 +57,11 @@ class qrs:
         self.naturalness_levels = []
         self.timelist = []
 
+        #To fetch table values in order to use these values in SP and SR
+        self.times=None
+        self.values=None
+
+	self.conf_path = None
         self.db = None
         self.db_cursor = None
         self.matrix_sr = None
@@ -72,6 +78,7 @@ class qrs:
         self.sigma_t = None
 
     def openDb(self, conf_path):
+	self.conf_path=conf_path
         conf = ConfigParser.ConfigParser()
         conf.read( conf_path )
         self.db = MySQLdb.connect(
@@ -85,6 +92,19 @@ class qrs:
     def closeDb(self):
         self.db_cursor.close()
         self.db.close()
+
+    def fetchTableValues(self, query):
+        self.openDb(self.conf_path)
+        self.db_cursor.execute(query)
+        rows = self.db_cursor.fetchall()
+        self.times=[]
+        self.values=[]
+
+        for row in rows:
+            if row[0] is not None:
+                self.times.append(row[0])
+                self.values.append(row[1])
+
 
     """ t: end date of the second period
         w: lenght of periods
@@ -411,14 +431,14 @@ class qrs:
         return newcmap
 
 
-    def displaySr(self, results):
+    def displaySr(self, results, pos_annotations, w):
+        #source: http://stackoverflow.com/questions/7404116/defining-the-midpoint-of-a-colormap-in-matplotlib
         if len(self.w_interval) > 1:
             print("Too many width values. Set w to some value.")
             return -1
         x, y = self.timelist, self.d_interval
         if self.matrix_sr is None:
             self.initMatrix( results )
-        #source: http://stackoverflow.com/questions/7404116/defining-the-midpoint-of-a-colormap-in-matplotlib
 
         #greener colors strengthen the claim
         #redder colors weaken the claim
@@ -426,8 +446,6 @@ class qrs:
         #we do not want to display nan values. So we mask nan values
         #there is nan values because some parameter combinations are not valid
         masked_array = np.ma.array (self.matrix_sr, mask=np.isnan(self.matrix_sr))
-        #We could do our colormap with discrete (listed) colors but LinearSegmentedColormap is better
-        #cMap = ListedColormap(['#FE2E2E', '#FE642E', '#FE9A2E', '#FACC2E', '#FFFF00', '#F3F781', '#C8FE2E', '#00FF00', '#01DF01'])
 
         colors = [(plt.cm.jet(i)) for i in xrange(230,140,-1)]
         green = [(0.6509803921568628, 1.0, 0.30980392156862746, 1.0), (0.6431372549019608, 1.0, 0.30980392156862746, 1.0), (0.6352941176470588, 1.0, 0.30980392156862746, 1.0), (0.6274509803921569, 1.0, 0.30980392156862746, 1.0), (0.6196078431372549, 1.0, 0.30980392156862746, 1.0), (0.611764705882353, 1.0, 0.30980392156862746, 1.0), (0.6039215686274509, 1.0, 0.30980392156862746, 1.0), (0.596078431372549, 1.0, 0.30980392156862746, 1.0), (0.5882352941176471, 1.0, 0.30980392156862746, 1.0), (0.5803921568627451, 1.0, 0.30980392156862746, 1.0), (0.5725490196078431, 1.0, 0.30980392156862746, 1.0), (0.5647058823529412, 1.0, 0.30980392156862746, 1.0), (0.5568627450980392, 1.0, 0.30980392156862746, 1.0), (0.5490196078431373, 1.0, 0.30980392156862746, 1.0), (0.5411764705882353, 1.0, 0.30980392156862746, 1.0),(0.5333333333333333, 1.0, 0.30980392156862746, 1.0), (0.5254901960784314, 1.0, 0.30980392156862746, 1.0), (0.5176470588235295, 1.0, 0.30980392156862746, 1.0), (0.5098039215686274, 1.0, 0.30980392156862746, 1.0)]
@@ -435,8 +453,7 @@ class qrs:
         colors= colors+green # len(green)=19, total_len = 109
         #plt.cm.jet() has 256 different colors.
         #We will focus on xrange(130,230) in descending order
-        #because we want that redder colors matches poor values
-        #and greener colors maches high values
+        #because we want that redder colors matches poor values and greener colors maches high values
 
         max_limit=0
         min_limit=0
@@ -450,20 +467,41 @@ class qrs:
         if max_limit <0:
             max_limit=0.40
 
-        cMap = LinearSegmentedColormap.from_list('cMap', colors,  N=109) #N=90+19
-        cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
+        cMap = LinearSegmentedColormap.from_list('cMap', colors,  N=len(colors))
+        #cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
 	orig_cmap = cMap
+	# Tuning the midpoint of colormap in order to match 'yellow' to 'zero'
 	shifted_cmap = self.shiftedColorMap(orig_cmap, midpoint=(abs(min_limit)/float(max_limit+abs(min_limit))), name='shifted', intensity_up=160, intensity_down=97)
 
         fig = plt.figure(figsize=(16,16)) # with (16,16), it is better for Hollande&Sarkozy's claim
-        grid = AxesGrid(fig, 111, nrows_ncols=(1, 1), axes_pad=0.5,
+        grid = AxesGrid(fig, 111, nrows_ncols=(1, 1), axes_pad=0.5, # just 1 plot in this grid
                 label_mode="1", share_all=True,
                 cbar_location="right", cbar_mode="each",
                 cbar_size="7%", cbar_pad="2%")
 
         im2 = grid[0].imshow(masked_array, origin="lower", interpolation="None", cmap=shifted_cmap)
 	grid.cbar_axes[0].colorbar(im2)
-	grid[0].set_title('SR', fontsize=14)
+	grid[0].set_title('Relative Strength of Results (SR)', fontsize=14)
+
+
+        # We get table values
+        # For instance, "times" is equal to 'years' and "values" is equal to 'adoptions' in the table 'nyc_adoptions'
+        times, values = self.times, self.values
+
+        # Initializing annotations on histogram
+        labels=["Claim","A","B"] # label of each annotation
+
+        # we get time and d values via pos_annotations
+        # for instance, if annotation=(5,6), the value is (2001,6) => according to [year, adoptions]
+        parameters = []
+        for pos in pos_annotations:
+            i=pos[0]
+            j=pos[1]
+            # x: time_interval, y: d_interval 
+            if not(isinstance(x[i], int)):  #Hollande&Sarkozy
+                parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
+            else:
+                parameters.append((x[i], y[j])) # corresponding parameters for each annotation
 
 	for ax in grid:
             ax.set_xticks(np.arange(len(x))-0.5)
@@ -472,28 +510,65 @@ class qrs:
             else:
                 ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
             ax.tick_params(axis='x', labelsize=8)
-            ax.set_yticks(np.arange(len(y))+0.5)
+            ax.set_yticks(np.arange(len(y))-0.5)
             ax.set_yticklabels(map(lambda i: str(i), y))
-            #plt.autoscale()
             ax.grid(True)
+            # Annotations
+            for label, xy in zip(labels, pos_annotations):
+                ax.annotate(label, xy, xytext=(20,20), size=12, textcoords="offset points",\
+                        bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
 
 
+        #Now, we generate 3 histograms (because we have 3 annotations)
+	f, (ax2, ax3, ax4) = plt.subplots(1, 3)
+	width=0.5 # width of each bar in histogram
+        for ax, param, label in zip([ax2, ax3, ax4], parameters, labels):
+            x=[]
+            y=[]
+            colors_hist=[]
+            w, d, t = w, param[1], param[0]
 
-	#    ax.set_yticks([])
-	#    ax.set_xticks([])
+            for time, val in zip(times, values): 
+                if not(isinstance(time, long)): #Hollande&Sarkozy
+                    year=datetime.combine(time, datetime.min.time())
+                    if year<=t and year>sub_month(w, t):
+                        colors_hist.append('green')
+                    elif year<=sub_month(d, t) and year>sub_month( w, sub_month(d, t)):
+                        colors_hist.append('red')
+                    else:
+                        colors_hist.append('blue')
+                else:
+                    year=time
+                    if year<=t and year>(t-w):
+                        colors_hist.append('green')
+                    elif year<=(t-d) and year>(t-d-w):
+                        colors_hist.append('red')
+                    else:
+                        colors_hist.append('blue')
 
-        # The aprt below does not work with hollande&sarkozy's claim
-        """
-        # draw a thick red hline at y=0 that spans the xrange
-        unit = 1.0 / (self.t_interval[-1] - self.t_interval[0])
-        middle = float(self.t0 - self.t_interval[0]) / float(self.t_interval[-1] - self.t_interval[0]) + unit
-        plt.axhline(y=self.d0 + 0.5, xmin=middle-unit/2, xmax=middle+unit/2, linewidth=4, color='b')
+                x.append(str(time)[:7])
+                y.append(val)
 
-        start = self.t0 - self.t_interval[0] + 1.5
-        unit = 1.0 / (self.d_interval[-1] - self.d_interval[0])
-        middle = float(self.d0 - self.d_interval[0]) / float(self.d_interval[-1] - self.d_interval[0]) + unit
-        plt.axvline(x=start, ymin=middle-unit/2, ymax=middle+unit/2, linewidth=4, color='b')
-	"""
+	    ax.bar(range(len(y)), y, width=width, color=colors_hist)
+	    ax.set_xticks(np.arange(len(y)) + width/2)
+	    #ax.set_xticklabels(x, rotation=270)
+	    # In order not to display all dates on x-axes, we use modulo for reduce the numbers of date
+            ax.set_xticklabels(map(lambda (i,a): str(a)[:7] if i%5==0 else "", enumerate(x)), rotation=270 ) ;
+	    ax.tick_params(axis='x', labelsize=9)
+
+	    extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none',\
+	            linewidth=0) # For adding "w,d,t" information on legend
+	    red_patch = mpatches.Patch(color='red') #adding red patch
+	    green_patch = mpatches.Patch(color='green')
+	    ax.legend([extra, red_patch, green_patch],["w= "+str(w)+", d= "+str(d)+\
+                    ", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':10})
+
+	    ax.set_title(label, fontsize=12)
+	
+            if not(isinstance(t, int)): # Hollande&Sarkozy
+	        x1,x2,y1,y2 = ax.axis()
+	        zoom_x=160
+	        ax.axis((zoom_x,x2,y1,y2)) # TODO we should find a good zoom_x
         plt.show()
         return True
 
@@ -551,7 +626,7 @@ class qrs:
 
         im2 = grid[0].imshow(masked_array, origin="lower", interpolation="None", cmap=shifted_cmap)
 	grid.cbar_axes[0].colorbar(im2)
-	grid[0].set_title('SP', fontsize=14)
+	grid[0].set_title('Relative Sensibility of Parameter Settings (SP)', fontsize=14)
 
 	for ax in grid:
             ax.set_xticks(np.arange(len(x))-0.5)
