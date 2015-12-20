@@ -11,6 +11,7 @@ from matplotlib.pyplot import figure
 from datetime import datetime, timedelta
 from mpl_toolkits.axes_grid1 import AxesGrid
 
+
 # Utils
 def sub_month(n, date):
     for i in range(n):
@@ -398,6 +399,7 @@ class qrs:
         self.matrix_sp = np.delete( self.matrix_sp, 0, 1 )
 
 
+    # This method is used in displaySr and displaySp
     def shiftedColorMap(self, cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap', intensity_up=127, intensity_down=128):
 	# intensity_up + intensity_down should be 257. Because we initialize 'reg_index' with 257 pixels
         cdict = {
@@ -431,7 +433,10 @@ class qrs:
         return newcmap
 
 
-    def displaySr(self, results, pos_annotations, w):
+    def displaySr(self, results, pos_annotations, w, legend_horizontal_margin=150, legend_location="upper left"):
+        """
+        This is doc string for SR
+        """
         #source: http://stackoverflow.com/questions/7404116/defining-the-midpoint-of-a-colormap-in-matplotlib
         if len(self.w_interval) > 1:
             print("Too many width values. Set w to some value.")
@@ -447,13 +452,14 @@ class qrs:
         #there is nan values because some parameter combinations are not valid
         masked_array = np.ma.array (self.matrix_sr, mask=np.isnan(self.matrix_sr))
 
+        #plt.cm.jet() has 256 different colors.
+        #We will focus on xrange(140,230) in descending order
+        #because we want that redder colors matches poor values and greener colors maches high values
         colors = [(plt.cm.jet(i)) for i in xrange(230,140,-1)]
         green = [(0.6509803921568628, 1.0, 0.30980392156862746, 1.0), (0.6431372549019608, 1.0, 0.30980392156862746, 1.0), (0.6352941176470588, 1.0, 0.30980392156862746, 1.0), (0.6274509803921569, 1.0, 0.30980392156862746, 1.0), (0.6196078431372549, 1.0, 0.30980392156862746, 1.0), (0.611764705882353, 1.0, 0.30980392156862746, 1.0), (0.6039215686274509, 1.0, 0.30980392156862746, 1.0), (0.596078431372549, 1.0, 0.30980392156862746, 1.0), (0.5882352941176471, 1.0, 0.30980392156862746, 1.0), (0.5803921568627451, 1.0, 0.30980392156862746, 1.0), (0.5725490196078431, 1.0, 0.30980392156862746, 1.0), (0.5647058823529412, 1.0, 0.30980392156862746, 1.0), (0.5568627450980392, 1.0, 0.30980392156862746, 1.0), (0.5490196078431373, 1.0, 0.30980392156862746, 1.0), (0.5411764705882353, 1.0, 0.30980392156862746, 1.0),(0.5333333333333333, 1.0, 0.30980392156862746, 1.0), (0.5254901960784314, 1.0, 0.30980392156862746, 1.0), (0.5176470588235295, 1.0, 0.30980392156862746, 1.0), (0.5098039215686274, 1.0, 0.30980392156862746, 1.0)]
 
+        # we are adding more green values => It is better to see different green values on heatmap
         colors= colors+green # len(green)=19, total_len = 109
-        #plt.cm.jet() has 256 different colors.
-        #We will focus on xrange(130,230) in descending order
-        #because we want that redder colors matches poor values and greener colors maches high values
 
         max_limit=0
         min_limit=0
@@ -468,7 +474,6 @@ class qrs:
             max_limit=0.40
 
         cMap = LinearSegmentedColormap.from_list('cMap', colors,  N=len(colors))
-        #cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
 	orig_cmap = cMap
 	# Tuning the midpoint of colormap in order to match 'yellow' to 'zero'
 	shifted_cmap = self.shiftedColorMap(orig_cmap, midpoint=(abs(min_limit)/float(max_limit+abs(min_limit))), name='shifted', intensity_up=160, intensity_down=97)
@@ -485,12 +490,12 @@ class qrs:
 
 
         # We get table values
-        # For instance, "times" is equal to 'years' and "values" is equal to 'adoptions' in the table 'nyc_adoptions'
+        # For instance, "times" is equal to 'years' and "values" is equal to 'adoptions' in the table 'nyc_adoptions' in MySQL
         times, values = self.times, self.values
 
         # Initializing annotations on histogram
         labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
-        labels = labels_general[:len(pos_annotations)]
+        labels = labels_general[:len(pos_annotations)] # we pick the ones that will be used on the axe
 
         # we get time and d values via pos_annotations
         # for instance, if annotation=(5,6), the value is (2001,6) => according to [year, adoptions]
@@ -519,6 +524,10 @@ class qrs:
                 ax.annotate(label, xy, xytext=(17,17), size=10.5, textcoords="offset points",ha='center', va='bottom',\
                         bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
 
+
+        ##############
+        # HISTOGRAMS #
+        ##############
 
         #Now, we generate len(pos_annotations) histograms (because we have len(pos_annotations) annotations)
 	f, axes = plt.subplots(1, len(pos_annotations))
@@ -567,10 +576,8 @@ class qrs:
                 x.append(str(time)[:7])
                 y.append(val)
 
-            #y = map(lambda (i,a): a if i%2 == 0 else 0, enumerate(y)) #reducing bars for enhancing display => For Hollande&Sarkozy
 	    ax.bar(range(len(y)), y, width=width, color=colors_hist)
 	    ax.set_xticks(np.arange(len(y)) + width/2)
-	    #ax.set_xticklabels(x, rotation=270)
 	    # In order not to display all dates on x-axes, we use modulo for reduce the numbers of date
 	    # We want to see at most 50 date labels on the axe
 	    reduction_ratio = 1
@@ -586,16 +593,16 @@ class qrs:
             if 'yellow' in colors_hist:
 	        yellow_patch = mpatches.Patch(color='yellow')
                 ax.legend([extra, red_patch, green_patch, yellow_patch],["w= "+str(w)+", d= "+str(d)+\
-                        ", t= "+str(t)[:7], "Period 1", "Period 2", "Intersection"], prop={'size':9}, loc='upper left')
+                        ", t= "+str(t)[:7], "Period 1", "Period 2", "Intersection"], prop={'size':12-len(axes)}, loc=legend_location)
             else:
 	        ax.legend([extra, red_patch, green_patch],["w= "+str(w)+", d= "+str(d)+\
-	                ", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':10}, loc='upper left')
+	                ", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':12-len(axes)}, loc=legend_location)
 
 	    ax.set_title(label, fontsize=12)
 
-            x1,x2,y1,y2 = ax.axis()
-            ax.set_ylim(y1,y2+150) # in order that legend stay up enough on the axe (screen) 
-            if len(x)>50:
+            x1,x2,y1,y2 = ax.axis() # we get the size of the current axe
+            ax.set_ylim(y1,y2+legend_horizontal_margin) # in order that legend stay up enough on the axe (screen) 
+            if len(x)>50: # if there is more than 50 dates, we focus on the part with green and red color => zooming
 	        ax.set_xlim(offset_first_red_bar-15,offset_last_green_bar+5) # For Hollande&Sarkozy
 
 	plt.tight_layout()
@@ -604,7 +611,7 @@ class qrs:
         plt.show()
         return True
 
-    def displaySp(self, results, pos_annotations, w):
+    def displaySp(self, results, pos_annotations, w, legend_horizontal_margin=150, legend_location="upper left"):
         if len(self.w_interval) > 1:
             print("Too many width values. Set w to some value.")
             return -1
@@ -624,7 +631,6 @@ class qrs:
         #because we want that darker colors matches high values
         #and greener/yellower colors maches poor values
 
-        #cMap.set_bad('white',1.) #does not work with pcolor() => use pcolormesh()
         fire_color=[(255, 238,60),  (255, 238, 63), (255, 238, 67), (255, 236, 67), (255, 234, 67), (255, 232, 67), (255, 230, 67), (255, 228, 67), (255, 226, 67), (255, 224, 67), (255, 222, 67), (255, 220, 67), (255, 218, 67), (255, 216, 67), (255, 214, 67), (255, 212, 67), (255, 210, 67), (255, 208, 67), (255, 206, 67), (255, 204, 67), (255, 202, 67), (255, 200, 67), (255, 198, 67), (255, 196, 67),  (255, 195, 67),(255, 193, 65),(255, 191, 63),(255, 189, 61),(255, 187, 59),(255, 185, 57),(255, 183, 55),(255, 181, 53),(255, 179, 51), (255, 177, 49),(255, 175, 47),(255, 173, 45),(255, 171, 43),(255, 169, 41),(255, 167, 39),(255, 165, 37),(255, 163, 35),(255, 161, 33),(255, 159, 31),(255, 157, 29),(255, 155, 27),(255, 153, 25),(255, 151, 23),(255, 149, 21),(255, 147, 19),(255, 145, 17),(255, 143, 15),(255, 141, 13),(255, 138, 11),(255, 136, 9),(255, 134, 7),(255, 132, 5),(255, 131, 3),(255, 129, 1),(254, 126, 0),(252, 125, 0),(250, 122, 0),(248, 121, 0),(246, 118, 0),(244, 116, 0),(242, 115, 0),(240, 113, 0),(238, 111,0),(236, 109, 0),(234, 107, 0),(232, 105, 0),(230, 102, 0),(228, 100, 0),(227, 98, 0),(225, 97, 0),(223, 94, 0),(221, 93, 0),(219, 91, 0),(217, 89, 0),(215, 87, 0),(213, 84, 0),(211, 83, 0),(209, 81, 0),(207, 79, 0),(205, 77, 0),(203, 75, 0),(201, 73, 0),(199, 70, 0),(197, 68, 0),(195, 66, 0),(193, 64, 0),(191, 63, 0),(189, 61, 0),(187, 59, 0),(185, 57, 0),(183, 54, 0),(181, 52, 0),(179, 51, 0),(177, 49, 0),(175, 47, 0),(174, 44, 0),(172, 42, 0),(170, 40, 0),(168, 39, 0), (166, 37, 0),(164, 34, 0),(162, 33, 0),(160, 31, 0),(158, 29, 0),(156, 27, 0),(154, 25, 0),(152, 22, 0),(150, 20, 0),(148, 18, 0),(146, 17, 0),(144, 14, 0),(142, 13, 0),(140, 11, 0),(138, 9, 0),(136, 6, 0),(134, 4, 0),(132, 2, 0),(130, 0, 0),(128, 0, 0),(126, 0, 0),(124, 0, 0),(122, 0, 0),(120, 0, 0),(118, 0, 0),(116, 0, 0),(114, 0, 0),(112, 0, 0),(110, 0, 0),(108, 0, 0),(106, 0, 0),(104, 0, 0),(102, 0, 0),(100, 0, 0),(98, 0, 0),(96, 0, 0),(94, 0, 0),(92, 0, 0),(90, 0, 0),(88, 0, 0),(86, 0, 0),(83, 0, 0),(81, 0, 0),(79, 0, 0),(77, 0, 0),(75, 0, 0),(73, 0, 0),(71, 0, 0),(69, 0, 0),(67, 0, 0),(65, 0, 0),(63, 0, 0),(61, 0, 0),(59, 0, 0),(57, 0, 0),(55, 0, 0),(53, 0, 0),(51, 0, 0),(49, 0, 0),(47, 0, 0),(45, 0, 0),(43, 0, 0),(41, 0, 0),(39, 0, 0),(37, 0, 0),(35, 0, 0),(33, 0, 0),(31, 0, 0),(29, 0, 0),(26, 0, 0),(24, 0, 0),(22, 0, 0),(20, 0, 0),(18, 0, 0),(16, 0, 0),(14, 0, 0),(12, 0, 0),(10, 0, 0),(8, 0, 0),(6, 0, 0),(4, 0, 0),(2,0, 0),(0, 0, 0)]
 
         fire_color = list(reversed(fire_color))
@@ -689,7 +695,6 @@ class qrs:
             ax.tick_params(axis='x', labelsize=8)
             ax.set_yticks(np.arange(len(y))-0.5)
             ax.set_yticklabels(map(lambda i: str(i), y))
-            #plt.autoscale()
             ax.grid(True)
 
             # Annotations
@@ -697,6 +702,10 @@ class qrs:
                 ax.annotate(label, xy, xytext=(20,20), size=12, textcoords="offset points", ha="center", va="bottom",\
                         bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
 
+
+        ##############
+        # HISTOGRAMS #
+        ##############
 
         #Now, we generate len(pos_annotations) histograms (because we have len(pos_annotations) annotations)
 	f, axes = plt.subplots(1, len(pos_annotations))
@@ -745,10 +754,8 @@ class qrs:
                 x.append(str(time)[:7])
                 y.append(val)
 
-            #y = map(lambda (i,a): a if i%2 == 0 else 0, enumerate(y)) #reducing bars for enhancing display => For Hollande&Sarkozy
 	    ax.bar(range(len(y)), y, width=width, color=colors_hist)
 	    ax.set_xticks(np.arange(len(y)) + width/2)
-	    #ax.set_xticklabels(x, rotation=270)
 	    # In order not to display all dates on x-axes, we use modulo for reduce the numbers of date
 	    reduction_ratio = 1
             if len(x)>50:
@@ -763,15 +770,15 @@ class qrs:
             if 'yellow' in colors_hist:
 	        yellow_patch = mpatches.Patch(color='yellow')
 	        ax.legend([extra, red_patch, green_patch, yellow_patch],["w= "+str(w)+", d= "+str(d)+\
-	                ", t= "+str(t)[:7], "Period 1", "Period 2", "Intersection"], prop={'size':9}, loc='upper left')
+	                ", t= "+str(t)[:7], "Period 1", "Period 2", "Intersection"], prop={'size':12-len(axes)}, loc=legend_location)
             else:
 	        ax.legend([extra, red_patch, green_patch],["w= "+str(w)+", d= "+str(d)+\
-	                ", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':10}, loc='upper left')
+	                ", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':12-len(axes)}, loc=legend_location)
 
 	    ax.set_title(label, fontsize=12)
             
             x1,x2,y1,y2 = ax.axis()
-            ax.set_ylim(y1,y2+150) # in order that legend stay up enough on the axe (screen) 
+            ax.set_ylim(y1,y2+legend_horizontal_margin) # in order that legend stay up enough on the axe (screen) 
             if len(x)>50:
 	        ax.set_xlim(offset_first_red_bar-15,offset_last_green_bar+5) # For Hollande&Sarkozy
 	plt.tight_layout()
