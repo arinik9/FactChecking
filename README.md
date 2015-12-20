@@ -33,3 +33,5 @@ mkdir ~/FactCheckingDocumentation (if it does not exist)
 
 epydoc --html  qrs.py -o ~/FactCheckingDocumentation/ (generating a html files)
 
+(useful webpage for epydoc: http://epydoc.sourceforge.net/epydoc.html#python-docstrings)
+

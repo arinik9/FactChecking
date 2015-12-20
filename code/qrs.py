@@ -11,15 +11,37 @@ from matplotlib.pyplot import figure
 from datetime import datetime, timedelta
 from mpl_toolkits.axes_grid1 import AxesGrid
 
+__url__ = 'https://github.com/arinik9/FactChecking'
+__author__ = 'Nejat ARINIK, Henri Hannetel'
+__package__ = 'numpy, matplotlib, ConfigParser, MySQLdb, Queue, math, datetime, mpl_toolkits.axes_grid1'
 
 # Utils
 def sub_month(n, date):
+    """
+    This method allows to substract 'n' month(s) from 'date'
+    
+    @param n: integer => the number of months 
+    @param date: datetime => ??
+
+    @return: date: datetime => ??
+    """
     for i in range(n):
         date -= timedelta(days=1)
         date = date.replace(day=1)
     return date
 
 def fill_params(query, t, w, d):
+    """
+    This method allows to fill the given parameters in the given query
+    'w' and 'd' depend on the type of 't'. If 't' is a year with 4 digits, 'w' and 'd' are in terms of year. If 't' is a date with year, month and day, so 'w' and 'd' are in terms of date.
+
+    @param query: String => the query to be filled
+    @param t: String or datetime => the end of second period
+    @param w: integer => length of period
+    @param d: integer => difference between second period and first period
+
+    @return: res: String => query complete
+    """
     res = """"""
     i = 0
     while i < len(query):
@@ -42,9 +64,26 @@ def fill_params(query, t, w, d):
 # QRS stands for Query Response Surface modelize a claim and is consituted by a parametrized database query
 # a set of para
 class qrs:
-    """Query Response Surface"""
+    """
+    qrs:  Query Response Surface. This class is implemented after read the article 'Computational Fact Checking'
+    This class allows to visualize any fact by perturbing parameters
+    """
+
     def __init__(self, query, t0, w0, d0, r0, claim_type, min_time):
-        """Initialization with parameters of the original claim"""
+        """
+        Initialization with parameters of the original claim
+        
+        @param query: query
+        @param t0: datetime or integer => the end of second period of original claim
+        @param w0: Integer => length of periods oforiginal claim 
+        @param d0: Integer => difference months or years between the end of second period and the first period of original claim
+        @param r0: Integer => the result of original claim
+        @param claim_type: String => 2 options are possible: "increasing" or "decreasing". If the original claim states the incresing of something (for instance the number of adoptions), we put "increasing".
+        @param min_time: datetime or integer => the last year or date in database. Before this time, data is not available in the database
+
+        @return: None
+        """
+
         self.q = query
         self.t0 = t0
         self.w0 = w0
@@ -79,6 +118,15 @@ class qrs:
         self.sigma_t = None
 
     def openDb(self, conf_path):
+        """
+        This method allows to open a database connection, specifically MySQL here. The connection object is used during database operations.
+
+        @param conf_path: String => the path of configuration file that contains DB connection information (username, password ...) 
+
+        @return:
+        None
+        """
+
         self.conf_path=conf_path
         conf = ConfigParser.ConfigParser()
         conf.read( conf_path )
@@ -91,10 +139,26 @@ class qrs:
         self.db_cursor = self.db.cursor()
 
     def closeDb(self):
+        """
+        This method allows to close the database connection opened before with openDb() method.
+
+        ##Parameters:## None
+
+        @return: None
+        """
+
         self.db_cursor.close()
         self.db.close()
 
     def fetchTableValues(self, query):
+        """
+        This method allow to get all values from database table in order to contruct a histogram. Histograms are based on these values.
+
+        @query: a query like 'select year, adoptions from nyc_adoptions;'. In other words, The resukt of the given query must return time information and data. 
+
+        @return None
+        """
+
         self.openDb(self.conf_path)
         self.db_cursor.execute(query)
         rows = self.db_cursor.fetchall()
@@ -107,10 +171,17 @@ class qrs:
                 self.values.append(row[1])
 
 
-    """ t: end date of the second period
-        w: lenght of periods
-        d: distance between the end of each period"""
     def initParameters(self, t, w, d):
+        """
+        This method allows to initialize all possbile parameters to perturb the original query. These parameters are held in 2 Queue structures.When a parameter is used from 'all possible parameters' queue, we put it in 'backup_parameters' in order to use it again.
+
+        @param t: List of datetime or integer => This list has just 2 proximities: Min an Max. If 't' is [1999, 2001], the list contains (1999, 2000, 2001).
+        @param w: List of integer => This list contains possible w values that user wants to perturb
+        @param d: List of integer => This list contains possible d values that user wants to perturb
+
+        @return: None
+        """
+
         self.t_interval, self.w_interval, self.d_interval = t, w, d
         if type(t[0]) == type(str()):
             cur_period = datetime.strptime( self.t_interval[0], "%Y-%m-%d" )
@@ -144,12 +215,30 @@ class qrs:
                 cur_period += 1
 
     def initSP(self, levels, sigma_w, sigma_t, sigma_d):
+        """
+        This method allows to provide 'levels', 'sigma_w', 'sigma_t' and 'sigma_d' for SP configuration
+
+        @param levels: levels on which SP is based. Each level is specified by a pair of naturalness score and an integral period that defines the domain values in a level. With these levels, we are able to give a SP score to a specific duration according to level definitions 
+        @param sigma_w: It is a coefficient to penalize 'w' values. Low sigma value penalizes more. High sigma value penalizes less.
+        @param sigma_t: It is a coefficient to penalize 't' values. Low sigma value penalizes more. High sigma value penalizes less.
+        @param sigma_d: It is a coefficient to penalize 'd' values. Low sigma value penalizes more. High sigma value penalizes less.
+
+        @return: None
+        """
         self.naturalness_levels = levels
         self.sigma_w = sigma_w
         self.sigma_d = sigma_d
         self.sigma_t = sigma_t
 
     def getP(self):
+        """
+        This method allows to get a just one parameter from Queue structure
+
+        ##Parameters:## None
+
+        @return: None
+        """
+
         if not self.all_possible_parameters.empty():
             param = self.all_possible_parameters.get()
             self.backup_parameters.put(param)
@@ -162,10 +251,17 @@ class qrs:
         return -1 # empty
 
     def execute(self):
+        """
+        This method allows to execute the query with parameters to in order to compare its result with the original result 'r0'. We execute all possible paraemters in this method and stock them in a list 'results'.
+
+        ##Parameters:## None
+        @return: results: List of (list of 4 values) => 't', 'w', 'd' and 'result'
+        """
+
         results = []
         parameters = self.getP()
 
-        while parameters != -1:
+        while parameters != -1: # The Queue 'all_possible_parameters' is not empty
             t, w, d = parameters[0:3]
             #print(fill_params(query, t, str(w), str(d)) )
             self.db_cursor.execute( fill_params(self.q, t, str(w), str(d)) )
@@ -179,18 +275,24 @@ class qrs:
     def SP(self, w, d, t):
         """ SP = SP_nat * SP_rel
         SP_nat = SP_nat_w * SP_nat_d
-        SP_rel = SP_rel_w * SP_rel_d * SP_rel_t """
+        SP_rel = SP_rel_w * SP_rel_d * SP_rel_t
 
-        """
         naturalness level = (chi_l, pi_l)
         x[1] % w == 0 -> check if a duration is multiple of w
         pi_l (integral period). If not, we put -1. Because at the end
         we'll use max() function and -1 will not be seleceted in any case
+
+        ##Input##
+        @param t: String or datetime => the end of second period
+        @param w: integer => length of period
+        @param d: integer => difference between second period and first period
+
+        @return: Sp score: Float => Sp score for given 'w', 'd' and 't'
         """
+
         sp_nat_w = max( map(lambda x: x[0] if w % x[1] == 0 else 1, self.naturalness_levels) )
         sp_nat_d = max( map(lambda x: x[0] if d % x[1] == 0 else 1, self.naturalness_levels) )
-        #sp_nat = sp_nat_w * sp_nat_d => un problem sur le calcul de sp_w
-        sp_nat =  sp_nat_d * sp_nat_w # TODO find a solution for sp_nat_w
+        sp_nat =  sp_nat_d * sp_nat_w 
 
         if type(self.t0) == type(str()):
             # t1 and self.t0 are type of datetime like (2013-07-16)
@@ -205,16 +307,32 @@ class qrs:
         sp_rel_d = math.exp( -1 * (float(d - self.d0) / float(self.sigma_d))**2 )
         sp_rel = sp_rel_w * sp_rel_d * sp_rel_t
 
-        return round(sp_nat * sp_rel, 3)
+        return round(sp_nat * sp_rel, 3) # with 3 decimals
 
     def SR(self, r):
-        """ SR = r/r0 - 1 for increasing rate
-            SR = r0/r - 1 for decreasing rate"""
+        """ 
+        SR = r/r0 - 1 for increasing rate
+        SR = r0/r - 1 for decreasing rate
+        
+        @param r: integer => the result found after executing query in the database for a specific parameter
+
+        @return: sr score: float => sr score for given result 'r'
+        """
+
         if self.claim_type == "increasing":
             return round( (float(r) / float(self.r0)) - 1, 3 )
-        return round( (float(self.r0) / float(r)) - 1, 3 )
+        return round( (float(self.r0) / float(r)) - 1, 3 ) # with 3 decimals
 
     def exclude_p(self, subset_a, p):
+        """
+        This method allows to remove all 'p_prime' from 'subset_a' when 'p_prime' < 'p'. This method is used in CA_tr() method.
+
+        @param subset_a: list of parameters => remembered parameter settings (qualified parameters)
+        @param p: list of 4 values (t,w,d,r) for given parameter 'p'
+
+        @return: subset_a: list of parameters => updated qualified parameters
+        """
+
         sp = self.SP(p[1], p[2], p[0])
         for p_prime in subset_a:
             sp_prime = self.SP(p_prime[1], p_prime[2], p_prime[0])
@@ -227,6 +345,15 @@ class qrs:
         return subset_a
 
     def CA_tr(self, threshold_r, results):
+        """
+        This method allows to find counter-arguments according to the threshold 'tr'. This threshold is based on SR function.
+
+        @param threshold_r: float
+        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+
+        @return: subset_a: list => list of counter-arguments
+        """
+
         subset_a = []
         if threshold_r > 0:
             print("please give a negatif threshold")
@@ -237,8 +364,18 @@ class qrs:
         return subset_a
 
     def CA_tp(self, threshold_p, results):
-    #This method returns a list. The first element of this list is an item with the lowest SR value
-    #That is why we add at the beginning of the list each time
+        """
+        This method allows to find counter-arguments according to the threshold 'tp'. This threshold is based on SP function.
+
+        This method returns a list. The first element of this list is an item with the lowest SR value
+        That is why we add at the beginning of the list each time
+
+        @param threshold_p: float
+        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+
+        @return subset_a: list => list of counter-arguments
+        """
+
         subset_a = []
         min_sr = 0
         for result in results:
@@ -258,8 +395,17 @@ class qrs:
         return [i[2] for i in subset_a]
 
     def CA_po(self, k, results):
-    # po: pareto-optimal
-    # k: nb of results for output with highest sensibility
+        """
+        po: pareto-optimal
+        k: nb of results for output with highest sensibility
+        This method allows to find counter-arguments according to pareto optimal. This method does not need any threshold.
+
+        @param k: integer => the number of counter-arguments for output
+        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+
+        @return subset_a[:k]: list => list of 'k' counter-arguments
+        """
+
         subset_a = []
         for result in results:
             t, w, d, r = result[0:4]
@@ -286,6 +432,15 @@ class qrs:
         return  subset_a[:k]
 
     def RE_tr(self, threshold_r, results):
+        """
+        This method allows to find reverse-engineering parameter settings according to the threshold 'tr'. This threshold is based on SP function.
+
+        @param threshold_r: float
+        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+
+        @return: subset_a: list => list of reverse-engineering
+        """
+
         if threshold_r<0:
             return "please give a positif threshold"
         subset_a = []
@@ -295,8 +450,18 @@ class qrs:
         return subset_a
 
     def RE_tp(self, threshold_p, results):
-    #This method returns a list. The first element of this list is an item with the lowest SR value
-    #That is why we add at the beginning of the list each time
+        """
+        This method allows to find reverse-engineering parameter settings according to the threshold 'tp'. This threshold is based on SP function.
+
+        This method returns a list. The first element of this list is an item with the lowest SR value
+        That is why we add at the beginning of the list each time
+
+        @param threshold_p: float
+        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+
+        @return subset_a: list => list of reverse-engineering
+        """
+
         subset_a = []
         min_sr = 0
         for result in results:
@@ -316,8 +481,17 @@ class qrs:
         return [i[2] for i in subset_a]
 
     def RE_po(self, k, results):
-    # po: pareto-optimal
-    # k: nb of results for output with highest sensibility
+        """
+        po: pareto-optimal
+        k: nb of results for output with highest sensibility
+        This method allows to find reverse-engineering parameter settigns according to pareto optimal. This method does not need any threshold.
+
+        @param k: integer => the number of reverse-engineering for output
+        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+
+        @return subset_a[:k]: list => list of 'k' reverse-engineering
+        """
+
         subset_a = []
         for result in results:
             t, w, d, r = result[0:4]
@@ -347,11 +521,20 @@ class qrs:
         return k_first_items
 
     def checkClaimQuality(self, results):
-        # low uniqueness means is easy to find perturbed claims that are at least as strong as the original clame
-        # low robustness means the original claim can be easily weakend
-        # fairness of 0: the claim is unbiased, positive fairness: the claim is understated, negative claim is overstated
+        """
+        Different quality measures make sense for claims of different types, or the same claim viewed from different per-
+        spectives
 
-        fairness = 0.0
+        low uniqueness means is easy to find perturbed claims that are at least as strong as the original clame
+        low robustness means the original claim can be easily weakend
+        fairness of 0: the claim is unbiased, positive fairness: the claim is understated, negative claim is overstated
+
+        @param results: list of list of 4 values: 't', 'w', 'd' and 'r'. These 4 values come form execute() method.
+
+        @return measures: List of float => Calculations for "fairness", "robustness" and "uniqueness"
+        """
+
+        fairness = 0.0 
         robustness = 0.0
         uniqueness = 0.0
         total_parameters_nb = float(abs(len(results)))
@@ -373,8 +556,20 @@ class qrs:
 
         return measures
 
-# SR and SP Display
+
+    #####################
+    # SR and SP Display #
+    #####################
+
     def initMatrix(self, results):
+        """
+        This method allows to create a matrix from results (output of execute() method). A matrix is created column by column.
+
+        @param results: the results from execute() method
+
+        @return None
+        """
+
         self.matrix_sr = [np.nan] * len( self.d_interval )
         self.matrix_sp = [np.nan] * len( self.d_interval )
 
@@ -399,8 +594,22 @@ class qrs:
         self.matrix_sp = np.delete( self.matrix_sp, 0, 1 )
 
 
-    # This method is used in displaySr and displaySp
-    def shiftedColorMap(self, cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap', intensity_up=127, intensity_down=128):
+    def shiftedColorMap(self, cmap, start=0.0, midpoint=0.5, stop=1.0, name='shiftedcmap', intensity_up=127, intensity_down=128):
+        """
+        This method allows to configure the colorbar beside heatmap. Thanks to this method, we match yellow color to '0' value which is midpoint of colorbar.
+        This method is used in displaySr and displaySp
+
+        @param cmap: colormap => color pixels
+        @param start: float => Start point. '0.0' means the first pixel in colormap
+        @param midpoint: float => Mid point
+        @param stop: float => Stop point. '1.0' means the last pixel in colormap
+        @param name: "shiftedcmap" always I think. It is used LinearSegmentedColormap() int his method
+        @param intensity_up: the number of pixel in the first part of colormap
+        @param intensity_down: the number of pixel in the second and last part of colormap. These 2 parts of colormap are separeted by 'midpoint'.
+
+        @return newcmap: new colormap shifted
+        """
+
 	# intensity_up + intensity_down should be 257. Because we initialize 'reg_index' with 257 pixels
         cdict = {
             'red': [],
@@ -411,12 +620,12 @@ class qrs:
 
 
         # regular index to compute the colors
-        reg_index = np.linspace(start, stop, 257)
+        reg_index = np.linspace(start, stop, 257) #generating values from 'start' to 'stop' with 257 points
 
         # shifted index to match the data
         shift_index = np.hstack([
-            np.linspace(0.0, midpoint, intensity_up, endpoint=False), 
-            np.linspace(midpoint, 1.0, intensity_down, endpoint=True)
+            np.linspace(start, midpoint, intensity_up, endpoint=False), #generating values from 'start' to 'midpoint' with 'intensity_up' points
+            np.linspace(midpoint, stop, intensity_down, endpoint=True) #generating values from 'midpoint' to 'stop' with 'intensity_down' points
         ])
 
         for ri, si in zip(reg_index, shift_index):
@@ -435,8 +644,18 @@ class qrs:
 
     def displaySr(self, results, pos_annotations, w, legend_horizontal_margin=150, legend_location="upper left"):
         """
-        This is doc string for SR
+        This method allows to display SR heatmap.
+
+        @param results: list of list of 4 values. Results from execute() method
+        @param pos_annotations: List of 2 integer values (x,y) => Positions of annotations on heatmap. 'x' and 'y' starts from 0.  
+        @param w: integer => for displaying a heatmap, we need to fixe one of the 3 parameters 'w', 'd' and 't'. We always fixe 'w' in this implementation
+        @param legend_horizontal_margin: integer => the margin between histogram bars and legend box. It is usefull when any histogram bars are overlapping with legend. By default 150
+        @param legend_location: string. the location of legend on histograms. By default "upper left". For the other options: http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.legend
+
+        @return Boolean value: True or False => 'True' indicates that display operation is done. 
         """
+
+
         #source: http://stackoverflow.com/questions/7404116/defining-the-midpoint-of-a-colormap-in-matplotlib
         if len(self.w_interval) > 1:
             print("Too many width values. Set w to some value.")
@@ -612,6 +831,18 @@ class qrs:
         return True
 
     def displaySp(self, results, pos_annotations, w, legend_horizontal_margin=150, legend_location="upper left"):
+        """
+        This method allows to display SP heatmap.
+
+        @param results: list of list of 4 values. Results from execute() method
+        @param pos_annotations: List of 2 integer values (x,y) => Positions of annotations on heatmap. 'x' and 'y' starts from 0.  
+        @param w: integer => for displaying a heatmap, we need to fixe one of the 3 parameters 'w', 'd' and 't'. We always fixe 'w' in this implementation
+        @param legend_horizontal_margin: integer => the margin between histogram bars and legend box. It is usefull when any histogram bars are overlapping with legend. By default 150
+        @param legend_location: string. the location of legend on histograms. By default "upper left". For the other options: http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.legend
+
+        @return Boolean value: True or False => 'True' indicates that display operation is done. 
+        """
+
         if len(self.w_interval) > 1:
             print("Too many width values. Set w to some value.")
             return -1
