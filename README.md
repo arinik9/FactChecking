@@ -26,3 +26,9 @@ Python modules specified in `prerequisite/python-requirements.txt`
 `virtualenv <your_venv_dir> -p python2`
 
 `pip install -r "prerequisite/python-requirements.txt"`
+
+### For Documentation: epydoc (sudo pip install epydoc)
+
+mkdir ~/FactCheckingDocumentation (if it does not exist)
+epydoc --html  qrs.py -o ~/FactCheckingDocumentation/ (generating a html files)
+
