@@ -17,6 +17,8 @@ Software specified in `prerequisite/soft-requirements.txt`
 
 Python modules specified in `prerequisite/python-requirements.txt`
 
+Set the MySQL configuration in `db-config.ini`
+
 ## Useful commands
 ### Setting up python environment
 `virtualenv <your_venv_dir> -p python2`

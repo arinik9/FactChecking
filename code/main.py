@@ -52,9 +52,9 @@ if __name__ == '__main__':
     print( obj.RE_po(5, results) )
 
     measures = obj.checkClaimQuality(results)
-    print "\nfairness: ", measures["fairness"]
-    print "robustness: ", measures["robustness"]
-    print "uniqueness: ", measures["uniqueness"]
+    print("\nfairness: ", measures["fairness"])
+    print("robustness: ", measures["robustness"])
+    print("uniqueness: ", measures["uniqueness"])
 
     pos_annotations_sr = [(45,10), (45,12), (43,10)]
     pos_annotations_sp = [(45,10), (45,12), (43,10)]
