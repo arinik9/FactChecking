@@ -302,6 +302,9 @@ class qrs:
             for row in rows:
                 if row[0] is not None:
                     results.append( [a, b, u, v, float(str(row[0]))] )
+                else: #None is a possible value if there is no vote in a specific period
+                    results.append( [a, b, u, v, float("0")] )
+
             parameters = self.getP()
         return results
 
@@ -638,8 +641,8 @@ class qrs:
         for result in results:
             a, b, u, v, r = result[0:5]
             if str(a) != str(old_a):
-                self.matrix_sr = np.column_stack( (self.matrix_sr, column_sr + [np.nan] * (len(self.timelist) - len(column_sr))) )
-                self.matrix_sp = np.column_stack( (self.matrix_sp, column_sp + [np.nan] * (len(self.timelist) - len(column_sp))) )
+                self.matrix_sr = np.column_stack( (self.matrix_sr, column_sr[::-1] + [np.nan] * (len(self.timelist) - len(column_sr))) )
+                self.matrix_sp = np.column_stack( (self.matrix_sp, column_sp[::-1] + [np.nan] * (len(self.timelist) - len(column_sp))) )
                 column_sr = []
                 column_sp = []
             old_a = a
@@ -706,7 +709,7 @@ class qrs:
         return newcmap
 
 
-    def displaySr(self, results):
+    def displaySr(self, results, pos_annotations):
     #def displaySr(self, results, pos_annotations, w, legend_horizontal_margin=150, legend_location="upper left"):
         """
         This method allows to display SR heatmap.
@@ -773,7 +776,7 @@ class qrs:
 	grid.cbar_axes[0].colorbar(im2)
 	grid[0].set_title('Relative Strength of Results (SR) => Times should be centered in each case', fontsize=14) #TODO
 
-        """
+
         # We get table values
         # For instance, "times" is equal to 'years' and "values" is equal to 'adoptions' in the table 'nyc_adoptions' in MySQL
         times, values = self.times, self.values
@@ -793,7 +796,7 @@ class qrs:
                 parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
             else:
                 parameters.append((x[i], y[j])) # corresponding parameters for each annotation
-        """
+
 
 	for ax in grid:
             ax.set_xticks(np.arange(len(x))-0.5)
@@ -808,12 +811,12 @@ class qrs:
             ax.set_xlabel('a: Begining of the period') #TODO
             ax.set_ylabel('b: End of the period') #TODO
 
-        """    
+    
             # Annotations
             for label, xy in zip(labels, pos_annotations):
                 ax.annotate(label, xy, xytext=(17,17), size=10.5, textcoords="offset points",ha='center', va='bottom',\
                         bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
-        """
+
 
         ##############
         # HISTOGRAMS #
@@ -902,7 +905,7 @@ class qrs:
         plt.show()
         return True
 
-    def displaySp(self, results):
+    def displaySp(self, results, pos_annotations):
     #def displaySp(self, results, pos_annotations, w, legend_horizontal_margin=150, legend_location="upper left"):
         """
         This method allows to display SP heatmap.
@@ -977,7 +980,7 @@ class qrs:
 	grid.cbar_axes[0].colorbar(im2)
 	grid[0].set_title('Relative Sensibility of Parameter Settings (SP) => Times should be centered in each case', fontsize=14) #TODO
 
-        """
+
         # We get table values
         # For instance, "times" is equal to 'years' and "values" is equal to 'adoptions' in the table 'nyc_adoptions'
         times, values = self.times, self.values
@@ -997,7 +1000,7 @@ class qrs:
                 parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
             else:
                 parameters.append((x[i], y[j])) # corresponding parameters for each annotation
-        """
+
 	
 	for ax in grid:
             ax.set_xticks(np.arange(len(x))-0.5)
@@ -1012,12 +1015,12 @@ class qrs:
             ax.set_xlabel('a: Begining of the period') #TODO
             ax.set_ylabel('b: End of the period') #TODO
        
-        """
+
             # Annotations
             for label, xy in zip(labels, pos_annotations):
                 ax.annotate(label, xy, xytext=(20,20), size=12, textcoords="offset points", ha="center", va="bottom",\
                         bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
-        """
+
 
         ##############
         # HISTOGRAMS #

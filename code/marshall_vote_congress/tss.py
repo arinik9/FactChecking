@@ -49,7 +49,7 @@ if __name__ == '__main__':
     a0, b0, u0, v0, r0, limit_min = "2010-01-01", "2010-10-15", "boehner", "marshall", 0.65, "2007-01-04" # 65% of same vote
     obj = qrs( query, a0, b0, u0, v0, r0, limit_min )
 
-    period = ['2010-01-01', '2010-05-01']
+    period = ['2009-01-01', '2010-12-01']
     # Possibilities: bachmann, boehner, clyburn, kaptur, kucinich, oberstar, rangel, rayn, schock, speier 
     #u = ["boehner", "bachmann", "schock", "ryan"]
     u = ["boehner"]
@@ -91,27 +91,14 @@ if __name__ == '__main__':
     #print results
 
     #print obj.timelist
-    obj.initMatrix(results)
+    #obj.initMatrix(results)
     #print obj.matrix_sr
     #print obj.matrix_sp
     
-    print(obj.displaySr(results))
-    print(obj.displaySp(results))
 
-    """
-    print("\nCA_po:")
-    print( obj.CA_po(5, results) ) # first 5 items
-
-    print("\nRE_po:")
-    print( obj.RE_po(5, results) )
-    """
-
-
-    """
-    obj.fetchTableValues("select mois, nb_chomeur from chomagePE;") # we need for SP and SR
+    #obj.fetchTableValues("select mois, nb_chomeur from chomagePE;") # we need for SP and SR
 
     print("\n")
-    print("I changed the width values. Now: ", widths)
 
     # it is difficult to find an appropriate threshold for RE and CA
     print("\nCA_po:")
@@ -125,9 +112,8 @@ if __name__ == '__main__':
     print "robustness: ", measures["robustness"]
     print "uniqueness: ", measures["uniqueness"]
 
-    pos_annotations_sr = [(45,10), (45,12), (43,10)]
-    pos_annotations_sp = [(45,10), (45,12), (43,10)]
-    for w in widths:
-        print(obj.displaySr(results, pos_annotations_sr, w))
-        print(obj.displaySp(results, pos_annotations_sp, w))"""
+    pos_annotations_sr = [(24,3)]
+    pos_annotations_sp = [(24,3)]
+    print(obj.displaySr(results, pos_annotations_sr))
+    print(obj.displaySp(results, pos_annotations_sp))
 
