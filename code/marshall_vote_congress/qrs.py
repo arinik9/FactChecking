@@ -33,14 +33,16 @@ def sub_month(n, date):
 def fill_params(query, a, b, u, v):
     """
     This method allows to fill the given parameters in the given query
-    'w' and 'd' depend on the type of 't'. If 't' is a year with 4 digits, 'w' and 'd' are in terms of year. If 't' is a date with year, month and day, so 'w' and 'd' are in terms of date.
+    'a' and 'b' are dates with year, month and day like '2010-01-15'
+    'a' is the begining of the period, 'b' is the end of the period
 
     @param query: String => the query to be filled
-    @param t: String or datetime => the end of second period
-    @param w: integer => length of period
-    @param d: integer => difference between second period and first period
+    @param a: datetime => the begining of period
+    @param b: datetime => the end of period
+    @param u: string => entity source like "marshall"
+    @param v: string => entity cible like "beohner"
 
-    @return: res: String => query complete
+    @return: res: String => completed query
     """
     
     res = """"""
@@ -80,12 +82,12 @@ class qrs:
         Initialization with parameters of the original claim
         
         @param query: query
-        @param t0: datetime or integer => the end of second period of original claim
-        @param w0: Integer => length of periods oforiginal claim 
-        @param d0: Integer => difference months or years between the end of second period and the first period of original claim
+        @param a0: datetime => the begining of period of original claim
+        @param b0: datetime => the end of period of original clail
+        @param u0: String => entity source in original claim
+        @param v0: String => entity cible in original claim
         @param r0: Integer => the result of original claim
-        @param claim_type: String => 2 options are possible: "increasing" or "decreasing". If the original claim states the incresing of something (for instance the number of adoptions), we put "increasing".
-        @param min_time: datetime or integer => the last year or date in database. Before this time, data is not available in the database
+        @param min_time: datetime  => the last  date in database. Before this time, data is not available in the database
 
         @return: None
         """
@@ -103,7 +105,7 @@ class qrs:
         self.naturalness_levels_a = []
         self.naturalness_levels_b = []
         self.naturalness_levels_length = []
-        self.timelist = [] #TODO Niye yapiyoduk bunu?
+        self.timelist = [] 
 
         #To fetch table values in order to use these values in SP and SR
         self.times=None
@@ -157,34 +159,15 @@ class qrs:
         self.db_cursor.close()
         self.db.close()
 
-    def fetchTableValues(self, query):
-        """
-        This method allow to get all values from database table in order to contruct a histogram. Histograms are based on these values.
-
-        @query: a query like 'select year, adoptions from nyc_adoptions;'. In other words, The resukt of the given query must return time information and data. 
-
-        @return None
-        """
-
-        self.openDb(self.conf_path)
-        self.db_cursor.execute(query)
-        rows = self.db_cursor.fetchall()
-        self.times=[]
-        self.values=[]
-
-        for row in rows:
-            if row[0] is not None:
-                self.times.append(row[0])
-                self.values.append(row[1])
-
 
     def initParameters(self, u, v, period):
         """
         This method allows to initialize all possbile parameters to perturb the original query. These parameters are held in 2 Queue structures.When a parameter is used from 'all possible parameters' queue, we put it in 'backup_parameters' in order to use it again.
+        In this function, we generate period of 15 days for all posible parameters
 
-        @param t: List of datetime or integer => This list has just 2 proximities: Min an Max. If 't' is [1999, 2001], the list contains (1999, 2000, 2001).
-        @param w: List of integer => This list contains possible w values that user wants to perturb
-        @param d: List of integer => This list contains possible d values that user wants to perturb
+        @param u: String => entity source
+        @param v:  String => entity cible
+        @param period: List of datetime or integer => This list has just 2 proximities: Min an Max. If 't' is [1999, 2001], the list contains (1999, 2000, 2001).
 
         @return: None
         """
@@ -202,14 +185,14 @@ class qrs:
 
         timer_a = 1 #if timer is 0, we will affect the first day of a month, otherwise the 15th of a month
         timer_b = 1
-        if cur_period_a.day == 15:
+        if cur_period_a.day >= 15:
             timer_a = 0
 
         while cur_period_a <= last_period_a and cur_period_a >= min_t:
            cur_period_b = first_period_b
            if cur_period_b.day == 15:
               timer_b = 0
-           while cur_period_b <= last_period_b and cur_period_b >= min_t: #TODO min_t'yi if ile goster altta
+           while cur_period_b <= last_period_b and cur_period_b >= min_t:
               if cur_period_a < cur_period_b:
                   for u in self.u_interval:
                       for v in self.v_interval:
@@ -250,10 +233,11 @@ class qrs:
         """
         This method allows to provide 'levels', 'sigma_w', 'sigma_t' and 'sigma_d' for SP configuration
 
-        @param levels: levels on which SP is based. Each level is specified by a pair of naturalness score and an integral period that defines the domain values in a level. With these levels, we are able to give a SP score to a specific duration according to level definitions 
-        @param sigma_w: It is a coefficient to penalize 'w' values. Low sigma value penalizes more. High sigma value penalizes less.
-        @param sigma_t: It is a coefficient to penalize 't' values. Low sigma value penalizes more. High sigma value penalizes less.
-        @param sigma_d: It is a coefficient to penalize 'd' values. Low sigma value penalizes more. High sigma value penalizes less.
+        @param levels_a: levels on which SP is based. Each level is specified by a pair of naturalness score and an integral period that defines the domain values in a level. With these levels, we give more SP score for the begining of a year
+        @param levels_b: levels on which SP is based. Each level is specified by a pair of naturalness score and an integral period that defines the domain values in a level. With these levels, we give more SP score for the end of a year 
+        @param levels_length: levels on which SP is based. Each level is specified by a pair of naturalness score and an integral period that defines the domain values in a level. With these levels, we give more SP score more longer period 
+        @param sigma_a: It is a coefficient to penalize 'a' values. Low sigma value penalizes more. High sigma value penalizes less.
+        @param sigma_b: It is a coefficient to penalize 'b' values. Low sigma value penalizes more. High sigma value penalizes less.
 
         @return: None
         """
@@ -288,7 +272,7 @@ class qrs:
         This method allows to execute the query with parameters to in order to compare its result with the original result 'r0'. We execute all possible paraemters in this method and stock them in a list 'results'.
 
         ##Parameters:## None
-        @return: results: List of (list of 4 values) => 't', 'w', 'd' and 'result'
+        @return: results: List of (list of 5 values) => 'a', 'b', 'u', 'v' and 'result'
         """
 
         results = []
@@ -310,8 +294,8 @@ class qrs:
 
     def SP(self, a, b):
         """ SP = SP_nat * SP_rel
-        SP_nat = SP_nat_w * SP_nat_d
-        SP_rel = SP_rel_w * SP_rel_d * SP_rel_t
+        SP_nat = SP_nat_a * SP_nat_b * sp_nat_length_period
+        SP_rel = SP_rel_a * SP_rel_b
 
         naturalness level = (chi_l, pi_l)
         x[1] % w == 0 -> check if a duration is multiple of w
@@ -319,11 +303,10 @@ class qrs:
         we'll use max() function and -1 will not be seleceted in any case
 
         ##Input##
-        @param t: String or datetime => the end of second period
-        @param w: integer => length of period
-        @param d: integer => difference between second period and first period
+        @param a: String or datetime => the begining of  period
+        @param b: integer => the end of period
 
-        @return: Sp score: Float => Sp score for given 'w', 'd' and 't'
+        @return: Sp score: Float => Sp score for given 'a' and 'b'
         """
 
         sp_nat_a = max( map(lambda x: x[0] if a[5:] == x[1] else 1, self.naturalness_levels_a) )
@@ -376,8 +359,7 @@ class qrs:
 
     def SR(self, r):
         """ 
-        SR = r/r0 - 1 for increasing rate
-        SR = r0/r - 1 for decreasing rate
+        SR = r - r0
         
         @param r: integer => the result found after executing query in the database for a specific parameter
 
@@ -391,7 +373,7 @@ class qrs:
         This method allows to remove all 'p_prime' from 'subset_a' when 'p_prime' < 'p'. This method is used in CA_tr() method.
 
         @param subset_a: list of parameters => remembered parameter settings (qualified parameters)
-        @param p: list of 4 values (t,w,d,r) for given parameter 'p'
+        @param p: list of 5 values (a,b,u,v,r) for given parameter 'p'
 
         @return: subset_a: list of parameters => updated qualified parameters
         """
@@ -412,7 +394,7 @@ class qrs:
         This method allows to find counter-arguments according to the threshold 'tr'. This threshold is based on SR function.
 
         @param threshold_r: float
-        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+        @param results: list of list of 5 values (a,b,u,v,r) from execute() method.
 
         @return: subset_a: list => list of counter-arguments
         """
@@ -464,7 +446,7 @@ class qrs:
         This method allows to find counter-arguments according to pareto optimal. This method does not need any threshold.
 
         @param k: integer => the number of counter-arguments for output
-        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+        @param results: list of list of 5 values (a,b,u,v,r) from execute() method.
 
         @return subset_a[:k]: list => list of 'k' counter-arguments
         """
@@ -499,7 +481,7 @@ class qrs:
         This method allows to find reverse-engineering parameter settings according to the threshold 'tr'. This threshold is based on SP function.
 
         @param threshold_r: float
-        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+        @param results: list of list of 5 values (a,b,u,v,r) from execute() method.
 
         @return: subset_a: list => list of reverse-engineering
         """
@@ -520,7 +502,7 @@ class qrs:
         That is why we add at the beginning of the list each time
 
         @param threshold_p: float
-        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+        @param results: list of list of 5 values (a,b,u,v,r) from execute() method.
 
         @return subset_a: list => list of reverse-engineering
         """
@@ -550,7 +532,7 @@ class qrs:
         This method allows to find reverse-engineering parameter settigns according to pareto optimal. This method does not need any threshold.
 
         @param k: integer => the number of reverse-engineering for output
-        @param results: list of list of 4 values (t,w,d,r) from execute() method.
+        @param results: list of list of 5 values (a,b,u,v,r) from execute() method.
 
         @return subset_a[:k]: list => list of 'k' reverse-engineering
         """
@@ -592,7 +574,7 @@ class qrs:
         low robustness means the original claim can be easily weakend
         fairness of 0: the claim is unbiased, positive fairness: the claim is understated, negative claim is overstated
 
-        @param results: list of list of 4 values: 't', 'w', 'd' and 'r'. These 4 values come form execute() method.
+        @param results: list of list of 5 values: 'a', 'b', 'u', 'v' and 'r'. These 4 values come form execute() method.
 
         @return measures: List of float => Calculations for "fairness", "robustness" and "uniqueness"
         """
@@ -713,10 +695,10 @@ class qrs:
     #def displaySr(self, results, pos_annotations, w, legend_horizontal_margin=150, legend_location="upper left"):
         """
         This method allows to display SR heatmap.
+        for displaying a heatmap, we need to fixe entity source 'u' and cible source 'v' in this implementation
 
-        @param results: list of list of 4 values. Results from execute() method
+        @param results: list of list of 5 values. Results from execute() method
         @param pos_annotations: List of 2 integer values (x,y) => Positions of annotations on heatmap. 'x' and 'y' starts from 0.  
-        @param w: integer => for displaying a heatmap, we need to fixe one of the 3 parameters 'w', 'd' and 't'. We always fixe 'w' in this implementation
         @param legend_horizontal_margin: integer => the margin between histogram bars and legend box. It is usefull when any histogram bars are overlapping with legend. By default 150
         @param legend_location: string. the location of legend on histograms. By default "upper left". For the other options: http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.legend
 
@@ -726,7 +708,7 @@ class qrs:
 
         #source: http://stackoverflow.com/questions/7404116/defining-the-midpoint-of-a-colormap-in-matplotlib
         if len(self.u_interval) > 1 or len(self.v_interval) > 1:
-            print("Too many width values. Set w to some value.")
+            print("Too many entities. Set unique entity source 'u' and entity cible 'v'")
             return -1
         x, y = self.timelist, self.timelist
         if self.matrix_sr is None:
@@ -817,91 +799,6 @@ class qrs:
                 ax.annotate(label, xy, xytext=(17,17), size=10.5, textcoords="offset points",ha='center', va='bottom',\
                         bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
 
-
-        ##############
-        # HISTOGRAMS #
-        ##############
-        """
-        #Now, we generate len(pos_annotations) histograms (because we have len(pos_annotations) annotations)
-	f, axes = plt.subplots(1, len(pos_annotations))
-        if not(isinstance(axes, np.ndarray)): # in case of single annotations
-            axes = np.asarray([axes])
-	width=1 # width of each bar in histogram
-        for ax, param, label in zip(axes, parameters, labels):
-            x=[]
-            y=[]
-            colors_hist=[]
-            w, d, t = w, param[1], param[0]
-
-            offset_last_green_bar = 0
-            offset_first_red_bar = 0
-            colors_hist = [None]*len(times)
-            for i, time, val in zip(range(len(times)), times, values): 
-                colors_hist[i] = 'blue'
-                if not(isinstance(time, long)): #Hollande&Sarkozy
-                    year=datetime.combine(time, datetime.min.time())
-                    if year<=t and year>sub_month(w, t):
-                        if not('green' in colors_hist):
-                            offset_last_green_bar = i+w
-                        colors_hist[i] = 'green'
-                        
-                    if year<=sub_month(d, t) and year>sub_month( w, sub_month(d, t)):
-                        if not('red' in colors_hist or 'yellow' in colors_hist):
-                            offset_first_red_bar = i
-                        if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar => intersection
-                            colors_hist[i] = 'yellow'
-                        else:
-                            colors_hist[i] = 'red'
-                else:
-                    year=time
-                    if year<=t and year>(t-w):
-                        if not('green' in colors_hist):
-                            offset_last_green_bar = i+w
-                        colors_hist[i] = 'green'
-                    if year<=(t-d) and year>(t-d-w):
-                        if not('red' in colors_hist or 'yellow' in colors_hist):
-                            offset_first_red_bar = i
-                        if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar
-                            colors_hist[i] = 'yellow'
-                        else:
-                            colors_hist[i] = 'red'
-
-                x.append(str(time)[:7])
-                y.append(val)
-
-	    ax.bar(range(len(y)), y, width=width, color=colors_hist)
-	    ax.set_xticks(np.arange(len(y)) + width/2)
-	    # In order not to display all dates on x-axes, we use modulo for reduce the numbers of date
-	    # We want to see at most 50 date labels on the axe
-	    reduction_ratio = 1
-            if len(x)>50:
-                reduction_ratio = len(x)/50
-            ax.set_xticklabels(map(lambda (i,a): str(a)[:7] if (i % reduction_ratio)==0 else "", enumerate(x)), rotation=270 ) 
-	    ax.tick_params(axis='x', labelsize=8)
-
-	    extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none',\
-	            linewidth=0) # For adding "w,d,t" information on legend
-	    red_patch = mpatches.Patch(color='red') #adding red patch
-	    green_patch = mpatches.Patch(color='green')
-            if 'yellow' in colors_hist:
-	        yellow_patch = mpatches.Patch(color='yellow')
-                ax.legend([extra, red_patch, green_patch, yellow_patch],["w= "+str(w)+", d= "+str(d)+\
-                        ", t= "+str(t)[:7], "Period 1", "Period 2", "Intersection"], prop={'size':12-len(axes)}, loc=legend_location)
-            else:
-	        ax.legend([extra, red_patch, green_patch],["w= "+str(w)+", d= "+str(d)+\
-	                ", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':12-len(axes)}, loc=legend_location)
-
-	    ax.set_title(label, fontsize=12)
-
-            x1,x2,y1,y2 = ax.axis() # we get the size of the current axe
-            ax.set_ylim(y1,y2+legend_horizontal_margin) # in order that legend stay up enough on the axe (screen) 
-            if len(x)>50: # if there is more than 50 dates, we focus on the part with green and red color => zooming
-	        ax.set_xlim(offset_first_red_bar-15,offset_last_green_bar+5) # For Hollande&Sarkozy
-
-	plt.tight_layout()
-	plt.subplots_adjust(wspace = 0.1*len(axes)) # updating margin between axes according to len(axes)
-        """
-
         plt.show()
         return True
 
@@ -910,9 +807,9 @@ class qrs:
         """
         This method allows to display SP heatmap.
 
-        @param results: list of list of 4 values. Results from execute() method
+        @param results: list of list of 5 values. Results from execute() method
         @param pos_annotations: List of 2 integer values (x,y) => Positions of annotations on heatmap. 'x' and 'y' starts from 0.  
-        @param w: integer => for displaying a heatmap, we need to fixe one of the 3 parameters 'w', 'd' and 't'. We always fixe 'w' in this implementation
+        @param w: integer => for displaying a heatmap, we need to fixe entity source 'u' and cible source 'v' in this implementation
         @param legend_horizontal_margin: integer => the margin between histogram bars and legend box. It is usefull when any histogram bars are overlapping with legend. By default 150
         @param legend_location: string. the location of legend on histograms. By default "upper left". For the other options: http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.legend
 
@@ -920,7 +817,7 @@ class qrs:
         """
 
         if len(self.u_interval) > 1 and len(self.v_interval):
-            print("Too many width values. Set w to some value.")
+            print("Too many entities. Set unique entity source 'u' and entity cible 'v'")
             return -1
         x, y = self.timelist, self.timelist
         if self.matrix_sr is None:
@@ -1022,87 +919,5 @@ class qrs:
                         bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
 
 
-        ##############
-        # HISTOGRAMS #
-        ##############
-        """
-        #Now, we generate len(pos_annotations) histograms (because we have len(pos_annotations) annotations)
-	f, axes = plt.subplots(1, len(pos_annotations))
-        if not(isinstance(axes, np.ndarray)): # in case of single annotation
-            axes = np.asarray([axes])
-	width=1 # width of each bar in histogram
-        for ax, param, label in zip(axes, parameters, labels):
-            x=[]
-            y=[]
-            colors_hist=[]
-            w, d, t = w, param[1], param[0]
-
-            offset_last_green_bar = 0
-            offset_first_red_bar = 0
-            colors_hist = [None]*len(times)
-            for i, time, val in zip(range(len(times)), times, values): 
-                colors_hist[i] = 'blue'
-                if not(isinstance(time, long)): #Hollande&Sarkozy
-                    year=datetime.combine(time, datetime.min.time())
-                    if year<=t and year>sub_month(w, t):
-                        if not('green' in colors_hist):
-                            offset_last_green_bar = i+w
-                        colors_hist[i] = 'green'
-                        
-                    if year<=sub_month(d, t) and year>sub_month( w, sub_month(d, t)):
-                        if not('red' in colors_hist or 'yellow' in colors_hist):
-                            offset_first_red_bar = i
-                        if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar => intersection
-                            colors_hist[i] = 'yellow'
-                        else:
-                            colors_hist[i] = 'red'
-                else:
-                    year=time
-                    if year<=t and year>(t-w):
-                        if not('green' in colors_hist):
-                            offset_last_green_bar = i+w
-                        colors_hist[i] = 'green'
-                    if year<=(t-d) and year>(t-d-w):
-                        if not('red' in colors_hist or 'yellow' in colors_hist):
-                            offset_first_red_bar = i
-                        if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar
-                            colors_hist[i] = 'yellow'
-                        else:
-                            colors_hist[i] = 'red'
-
-                x.append(str(time)[:7])
-                y.append(val)
-
-	    ax.bar(range(len(y)), y, width=width, color=colors_hist)
-	    ax.set_xticks(np.arange(len(y)) + width/2)
-	    # In order not to display all dates on x-axes, we use modulo for reduce the numbers of date
-	    reduction_ratio = 1
-            if len(x)>50:
-                reduction_ratio = len(x)/50
-            ax.set_xticklabels(map(lambda (i,a): str(a)[:7] if (i % reduction_ratio)==0 else "", enumerate(x)), rotation=270 ) ;
-	    ax.tick_params(axis='x', labelsize=9)
-
-	    extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none',\
-	            linewidth=0) # For adding "w,d,t" information on legend
-	    red_patch = mpatches.Patch(color='red') #adding red patch
-	    green_patch = mpatches.Patch(color='green')
-            if 'yellow' in colors_hist:
-	        yellow_patch = mpatches.Patch(color='yellow')
-	        ax.legend([extra, red_patch, green_patch, yellow_patch],["w= "+str(w)+", d= "+str(d)+\
-	                ", t= "+str(t)[:7], "Period 1", "Period 2", "Intersection"], prop={'size':12-len(axes)}, loc=legend_location)
-            else:
-	        ax.legend([extra, red_patch, green_patch],["w= "+str(w)+", d= "+str(d)+\
-	                ", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':12-len(axes)}, loc=legend_location)
-
-	    ax.set_title(label, fontsize=12)
-            
-            x1,x2,y1,y2 = ax.axis()
-            ax.set_ylim(y1,y2+legend_horizontal_margin) # in order that legend stay up enough on the axe (screen) 
-            if len(x)>50:
-	        ax.set_xlim(offset_first_red_bar-15,offset_last_green_bar+5) # For Hollande&Sarkozy
-	plt.tight_layout()
-	plt.subplots_adjust(wspace = 0.1*len(axes)) # updating margin between axes according to len(axes)
-        """
-        
         plt.show()
         return True
