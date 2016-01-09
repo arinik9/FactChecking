@@ -26,11 +26,16 @@ if __name__ == '__main__':
     times = ['2011-01-01', '2015-08-01']
     #widths = range(25,36)
     widths = [30]
-    durations = range(20,41)
+    #widths = range(25,36)
+    durations = range(20,61)
     obj.initParameters( times, widths, durations )
 
-    levels = [(1,1), (2.71, 60)]
+
+    #levels = [(1,1), (2.71, 60)]
+    levels = [(1,1), (2.71, 3), (7.34, 6), (19.9, 12)]
+
     sigma_w, sigma_t, sigma_d = 5, 1, 10
+    #sigma_w, sigma_t, sigma_d = 2.5, 5, 10
     obj.initSP( levels, sigma_w, sigma_t, sigma_d  )
 
 ################################################################################
@@ -56,9 +61,9 @@ if __name__ == '__main__':
     print("robustness: ", measures["robustness"])
     print("uniqueness: ", measures["uniqueness"])
 
-    pos_annotations_sr = [(45,10), (45,12), (43,10)]
-    pos_annotations_sp = [(45,10), (45,12), (43,10)]
+    pos_annotations_sr = [(45,28), (45,18)]
+    pos_annotations_sp = [(45,28)]
     for w in widths:
-        print(obj.displaySr(results, pos_annotations_sr, w))
-        print(obj.displaySp(results, pos_annotations_sp, w))
+        print(obj.displaySr(results, w, pos_annotations_sr))
+        print(obj.displaySp(results, w))#pos_annotations_sp
 

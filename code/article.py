@@ -53,5 +53,5 @@ if __name__ == '__main__':
     pos_annotations_sr = [(6,5), (10,6), (5,5)]
     pos_annotations_sp = [(6,5), (7,7), (5,5), (6,3)]
     for w in widths:
-        print(obj.displaySr(results, pos_annotations_sr, w))
-        print(obj.displaySp(results, pos_annotations_sp, w))
+        print(obj.displaySr(results, w, pos_annotations_sr)) #pos_annotations_sr
+        print(obj.displaySp(results, w, pos_annotations_sp))
