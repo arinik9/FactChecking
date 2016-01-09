@@ -691,7 +691,7 @@ class qrs:
         return newcmap
 
 
-    def displaySr(self, results, pos_annotations):
+    def displaySr(self, results, pos_annotations=None):
     #def displaySr(self, results, pos_annotations, w, legend_horizontal_margin=150, legend_location="upper left"):
         """
         This method allows to display SR heatmap.
@@ -763,21 +763,21 @@ class qrs:
         # For instance, "times" is equal to 'years' and "values" is equal to 'adoptions' in the table 'nyc_adoptions' in MySQL
         times, values = self.times, self.values
 
-        # Initializing annotations on histogram
-        labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
-        labels = labels_general[:len(pos_annotations)] # we pick the ones that will be used on the axe
+        # Initializing annotations on heatmap
+        if pos_annotations != None:
+            labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
+            labels = labels_general[:len(pos_annotations)] # we pick the ones that will be used on the axe
 
-        # we get time and d values via pos_annotations
         # for instance, if annotation=(5,6), the value is (2001,6) => according to [year, adoptions]
-        parameters = []
-        for pos in pos_annotations:
-            i=pos[0]
-            j=pos[1]
-            # x: time_interval, y: d_interval 
-            if not(isinstance(x[i], int)):  #Hollande&Sarkozy
-                parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
-            else:
-                parameters.append((x[i], y[j])) # corresponding parameters for each annotation
+            parameters = []
+            for pos in pos_annotations:
+                i=pos[0]
+                j=pos[1]
+                # x: time_interval, y: d_interval 
+                if not(isinstance(x[i], int)):  #Hollande&Sarkozy
+                    parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
+                else:
+                    parameters.append((x[i], y[j])) # corresponding parameters for each annotation
 
 
 	for ax in grid:
@@ -795,14 +795,15 @@ class qrs:
 
     
             # Annotations
-            for label, xy in zip(labels, pos_annotations):
-                ax.annotate(label, xy, xytext=(17,17), size=10.5, textcoords="offset points",ha='center', va='bottom',\
-                        bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
+            if pos_annotations != None:
+                for label, xy in zip(labels, pos_annotations):
+                    ax.annotate(label, xy, xytext=(17,17), size=10.5, textcoords="offset points",ha='center', va='bottom',\
+                            bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
 
         plt.show()
         return True
 
-    def displaySp(self, results, pos_annotations):
+    def displaySp(self, results, pos_annotations=None):
     #def displaySp(self, results, pos_annotations, w, legend_horizontal_margin=150, legend_location="upper left"):
         """
         This method allows to display SP heatmap.
@@ -882,21 +883,21 @@ class qrs:
         # For instance, "times" is equal to 'years' and "values" is equal to 'adoptions' in the table 'nyc_adoptions'
         times, values = self.times, self.values
 
-        # Initializing annotations on histogram
-        labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
-        labels = labels_general[:len(pos_annotations)]
+        # Initializing annotations on heatmap
+        if pos_annotations != None:
+            labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
+            labels = labels_general[:len(pos_annotations)]
 
-        # we get time and d values via pos_annotations
         # for instance, if annotation=(5,6), the value is (2001,6) => according to [year, adoptions]
-        parameters = []
-        for pos in pos_annotations:
-            i=pos[0]
-            j=pos[1]
-            # x: time_interval, y: d_interval 
-            if not(isinstance(x[i], int)):  #Hollande&Sarkozy
-                parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
-            else:
-                parameters.append((x[i], y[j])) # corresponding parameters for each annotation
+            parameters = []
+            for pos in pos_annotations:
+                i=pos[0]
+                j=pos[1]
+                # x: time_interval, y: d_interval 
+                if not(isinstance(x[i], int)):  #Hollande&Sarkozy
+                    parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
+                else:
+                    parameters.append((x[i], y[j])) # corresponding parameters for each annotation
 
 	
 	for ax in grid:
@@ -914,9 +915,10 @@ class qrs:
        
 
             # Annotations
-            for label, xy in zip(labels, pos_annotations):
-                ax.annotate(label, xy, xytext=(20,20), size=12, textcoords="offset points", ha="center", va="bottom",\
-                        bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
+            if pos_annotations != None:
+                for label, xy in zip(labels, pos_annotations):
+                    ax.annotate(label, xy, xytext=(20,20), size=12, textcoords="offset points", ha="center", va="bottom",\
+                            bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
 
 
         plt.show()
