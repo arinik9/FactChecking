@@ -722,21 +722,21 @@ class qrs:
 		times, values = self.times, self.values
 
 		# Initializing annotations on heatmap
-                if pos_annotations != None:
-                    labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
-                    labels = labels_general[:len(pos_annotations)] # we pick the ones that will be used on the axe
+		if pos_annotations != None:
+			labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
+			labels = labels_general[:len(pos_annotations)] # we pick the ones that will be used on the axe
 
-                    # we get time and d values via pos_annotations
-                    # for instance, if annotation=(5,6), the value is (2001,6) => according to [year, adoptions]
-                    parameters = []
-                    for pos in pos_annotations:
-                            i=pos[0]
-                            j=pos[1]
-                            # x: time_interval, y: d_interval 
-                            if not(isinstance(x[i], int)):  #Hollande&Sarkozy
-                                    parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
-                            else:
-                                    parameters.append((x[i], y[j])) # corresponding parameters for each annotation
+			# we get time and d values via pos_annotations
+			# for instance, if annotation=(5,6), the value is (2001,6) => according to [year, adoptions]
+			parameters = []
+			for pos in pos_annotations:
+					i=pos[0]
+					j=pos[1]
+					# x: time_interval, y: d_interval 
+					if not(isinstance(x[i], int)):  #Hollande&Sarkozy
+							parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
+					else:
+							parameters.append((x[i], y[j])) # corresponding parameters for each annotation
 
 		for ax in grid:
 			ax.set_xticks(np.arange(len(x))-0.5)
@@ -748,100 +748,99 @@ class qrs:
 			ax.set_yticks(np.arange(len(y))-0.5)
 			ax.set_yticklabels(map(lambda i: str(i), y))
 			ax.grid(True)
-                        ax.set_xlabel('Year')
-                        ax.set_ylabel('Distance between periods')
+			ax.set_xlabel('Year')
+			ax.set_ylabel('Distance between periods')
 
 
 			# Annotations
-                        if pos_annotations != None:
-                            for label, xy in zip(labels, pos_annotations):
-                                    ax.annotate(	label, xy, xytext=(17,17), size=10.5, textcoords="offset points",ha='center', va='bottom',
-                                                                    bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'}
-				)
+			if pos_annotations != None:
+				for label, xy in zip(labels, pos_annotations):
+					ax.annotate(	label, xy, xytext=(17,17), size=10.5, textcoords="offset points",ha='center', va='bottom',
+									bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'}
+					)
 
 
 	##############
 	# HISTOGRAMS #
 	##############
 
-                if pos_annotations != None:
-                    #Now, we generate len(pos_annotations) histograms (because we have len(pos_annotations) annotations)
-                    f, axes = plt.subplots(1, len(pos_annotations))
-                    if not(isinstance(axes, np.ndarray)): # in case of single annotations
-                            axes = np.asarray([axes])
-                    width=1 # width of each bar in histogram
-                    for ax, param, label in zip(axes, parameters, labels):
-                            x=[]
-                            y=[]
-                            colors_hist=[]
-                            w, d, t = w, param[1], param[0]
+		if pos_annotations != None:
+			#Now, we generate len(pos_annotations) histograms (because we have len(pos_annotations) annotations)
+			f, axes = plt.subplots(1, len(pos_annotations))
+			if not(isinstance(axes, np.ndarray)): # in case of single annotations
+				axes = np.asarray([axes])
+			width=1 # width of each bar in histogram
+			for ax, param, label in zip(axes, parameters, labels):
+				x=[]
+				y=[]
+				colors_hist=[]
+				w, d, t = w, param[1], param[0]
 
-                            offset_last_green_bar = 0
-                            offset_first_red_bar = 0
-                            colors_hist = [None]*len(times)
-                            for i, time, val in zip(range(len(times)), times, values): 
-                                    colors_hist[i] = 'blue'
-                                    if not(isinstance(time, long)): #Hollande&Sarkozy
-                                            year=datetime.combine(time, datetime.min.time())
-                                            if year<=t and year>sub_month(w, t):
-                                                    if not('green' in colors_hist):
-                                                            offset_last_green_bar = i+w
-                                                    colors_hist[i] = 'green'
-                                                    
-                                            if year<=sub_month(d, t) and year>sub_month( w, sub_month(d, t)):
-                                                    if not('red' in colors_hist or 'yellow' in colors_hist):
-                                                            offset_first_red_bar = i
-                                                    if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar => intersection
-                                                            colors_hist[i] = 'yellow'
-                                                    else:
-                                                            colors_hist[i] = 'red'
-                                    else:
-                                            year=time
-                                            if year<=t and year>(t-w):
-                                                    if not('green' in colors_hist):
-                                                            offset_last_green_bar = i+w
-                                                    colors_hist[i] = 'green'
-                                            if year<=(t-d) and year>(t-d-w):
-                                                    if not('red' in colors_hist or 'yellow' in colors_hist):
-                                                            offset_first_red_bar = i
-                                                    if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar
-                                                            colors_hist[i] = 'yellow'
-                                                    else:
-                                                            colors_hist[i] = 'red'
+				offset_last_green_bar = 0
+				offset_first_red_bar = 0
+				colors_hist = [None]*len(times)
+				for i, time, val in zip(range(len(times)), times, values): 
+					colors_hist[i] = 'blue'
+					if not(isinstance(time, long)): #Hollande&Sarkozy
+							year=datetime.combine(time, datetime.min.time())
+							if year<=t and year>sub_month(w, t):
+									if not('green' in colors_hist):
+											offset_last_green_bar = i+w
+									colors_hist[i] = 'green'
+									
+							if year<=sub_month(d, t) and year>sub_month( w, sub_month(d, t)):
+									if not('red' in colors_hist or 'yellow' in colors_hist):
+											offset_first_red_bar = i
+									if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar => intersection
+											colors_hist[i] = 'yellow'
+									else:
+											colors_hist[i] = 'red'
+					else:
+							year=time
+							if year<=t and year>(t-w):
+									if not('green' in colors_hist):
+											offset_last_green_bar = i+w
+									colors_hist[i] = 'green'
+							if year<=(t-d) and year>(t-d-w):
+									if not('red' in colors_hist or 'yellow' in colors_hist):
+											offset_first_red_bar = i
+									if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar
+											colors_hist[i] = 'yellow'
+									else:
+											colors_hist[i] = 'red'
+					x.append(str(time)[:7])
+					y.append(val)
 
-                                    x.append(str(time)[:7])
-                                    y.append(val)
+				ax.bar(range(len(y)), y, width=width, color=colors_hist)
+				ax.set_xticks(np.arange(len(y)) + width/2)
+				# In order not to display all dates on x-axes, we use modulo for reduce the numbers of date
+				# We want to see at most 50 date labels on the axe
+				reduction_ratio = 1
+				if len(x)>50:
+						reduction_ratio = len(x) / 50
+				ax.set_xticklabels(map(lambda (i,a): str(a)[:7] if (i % reduction_ratio)==0 else "", enumerate(x)), rotation=270 ) 
+				ax.tick_params(axis='x', labelsize=8)
 
-                            ax.bar(range(len(y)), y, width=width, color=colors_hist)
-                            ax.set_xticks(np.arange(len(y)) + width/2)
-                            # In order not to display all dates on x-axes, we use modulo for reduce the numbers of date
-                            # We want to see at most 50 date labels on the axe
-                            reduction_ratio = 1
-                            if len(x)>50:
-                                    reduction_ratio = len(x) / 50
-                            ax.set_xticklabels(map(lambda (i,a): str(a)[:7] if (i % reduction_ratio)==0 else "", enumerate(x)), rotation=270 ) 
-                            ax.tick_params(axis='x', labelsize=8)
+				extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0) # For adding "w,d,t" information on legend
+				red_patch = mpatches.Patch(color='red') #adding red patch
+				green_patch = mpatches.Patch(color='green')
+				if 'yellow' in colors_hist:
+						yellow_patch = mpatches.Patch(color='yellow')
+						ax.legend([extra, red_patch, green_patch, yellow_patch],["w= "+str(w)+", d= "+str(d)+\
+										", t= "+str(t)[:7], "Period 1", "Period 2", "Intersection"], prop={'size':12-len(axes)}, loc=legend_location)
+				else:
+						ax.legend([extra, red_patch, green_patch],["w= "+str(w)+", d= "+str(d)+\
+						", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':12-len(axes)}, loc=legend_location)
 
-                            extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0) # For adding "w,d,t" information on legend
-                            red_patch = mpatches.Patch(color='red') #adding red patch
-                            green_patch = mpatches.Patch(color='green')
-                            if 'yellow' in colors_hist:
-                                    yellow_patch = mpatches.Patch(color='yellow')
-                                    ax.legend([extra, red_patch, green_patch, yellow_patch],["w= "+str(w)+", d= "+str(d)+\
-                                                    ", t= "+str(t)[:7], "Period 1", "Period 2", "Intersection"], prop={'size':12-len(axes)}, loc=legend_location)
-                            else:
-                                    ax.legend([extra, red_patch, green_patch],["w= "+str(w)+", d= "+str(d)+\
-                                    ", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':12-len(axes)}, loc=legend_location)
+				ax.set_title(label, fontsize=12)
 
-                            ax.set_title(label, fontsize=12)
+				x1,x2,y1,y2 = ax.axis() # we get the size of the current axe
+				ax.set_ylim(y1,y2+legend_horizontal_margin) # in order that legend stay up enough on the axe (screen) 
+				if len(x)>50: # if there is more than 50 dates, we focus on the part with green and red color => zooming
+						ax.set_xlim(offset_first_red_bar-15,offset_last_green_bar+5) # For Hollande&Sarkozy
 
-                            x1,x2,y1,y2 = ax.axis() # we get the size of the current axe
-                            ax.set_ylim(y1,y2+legend_horizontal_margin) # in order that legend stay up enough on the axe (screen) 
-                            if len(x)>50: # if there is more than 50 dates, we focus on the part with green and red color => zooming
-                                    ax.set_xlim(offset_first_red_bar-15,offset_last_green_bar+5) # For Hollande&Sarkozy
-
-                            plt.tight_layout()
-                            plt.subplots_adjust(wspace = 0.1*len(axes)) # updating margin between axes according to len(axes)
+				plt.tight_layout()
+				plt.subplots_adjust(wspace = 0.1*len(axes)) # updating margin between axes according to len(axes)
 
 		plt.show()
 		return True
@@ -917,123 +916,123 @@ class qrs:
 		# For instance, "times" is equal to 'years' and "values" is equal to 'adoptions' in the table 'nyc_adoptions'
 		times, values = self.times, self.values
 
-                if pos_annotations != None:
-                    # Initializing annotations on histogram
-                    labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
-                    labels = labels_general[:len(pos_annotations)]
+		if pos_annotations != None:
+			# Initializing annotations on histogram
+			labels_general=["Claim","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"] # label of each annotation
+			labels = labels_general[:len(pos_annotations)]
 
-                    # we get time and d values via pos_annotations
-                    # for instance, if annotation=(5,6), the value is (2001,6) => according to [year, adoptions]
-                    parameters = []
-                    for pos in pos_annotations:
-                            i=pos[0]
-                            j=pos[1]
-                            # x: time_interval, y: d_interval 
-                            if not(isinstance(x[i], int)):  #Hollande&Sarkozy
-                                    parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
-                            else:
-                                    parameters.append((x[i], y[j])) # corresponding parameters for each annotation
+			# we get time and d values via pos_annotations
+			# for instance, if annotation=(5,6), the value is (2001,6) => according to [year, adoptions]
+			parameters = []
+			for pos in pos_annotations:
+				i=pos[0]
+				j=pos[1]
+				# x: time_interval, y: d_interval 
+				if not(isinstance(x[i], int)):  #Hollande&Sarkozy
+					parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
+				else:
+					parameters.append((x[i], y[j])) # corresponding parameters for each annotation
 
 		for ax in grid:
-				ax.set_xticks(np.arange(len(x))-0.5)
-				if type(self.t_interval[0]) == type(str):
-					ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
-				else:
-					ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
-				ax.tick_params(axis='x', labelsize=8)
-				ax.set_yticks(np.arange(len(y))-0.5)
-				ax.set_yticklabels(map(lambda i: str(i), y))
-				ax.grid(True)
-                                ax.set_xlabel('Year')
-                                ax.set_ylabel('Distance between periods')
+			ax.set_xticks(np.arange(len(x))-0.5)
+			if type(self.t_interval[0]) == type(str):
+				ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
+			else:
+				ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
+			ax.tick_params(axis='x', labelsize=8)
+			ax.set_yticks(np.arange(len(y))-0.5)
+			ax.set_yticklabels(map(lambda i: str(i), y))
+			ax.grid(True)
+			ax.set_xlabel('Year')
+			ax.set_ylabel('Distance between periods')
 
-				# Annotations
-                                if pos_annotations != None:
-                                    for label, xy in zip(labels, pos_annotations):
-                                            ax.annotate(label, xy, xytext=(20,20), size=12, textcoords="offset points", ha="center", va="bottom",\
-                                                            bbox={'facecolor':'white'}, arrowprops={'arrowstyle':'->'})
+			# Annotations
+			if pos_annotations != None:
+				for label, xy in zip(labels, pos_annotations):
+					ax.annotate(	label, xy, xytext=(20,20), size=12, textcoords="offset points", ha="center", va="bottom",
+										box={'facecolor':'white'}, arrowprops={'arrowstyle':'->'}
+					)
 
 
 		##############
 		# HISTOGRAMS #
 		##############
 
-                if pos_annotations != None:
-                    #Now, we generate len(pos_annotations) histograms (because we have len(pos_annotations) annotations)
-                    f, axes = plt.subplots(1, len(pos_annotations))
-                    if not(isinstance(axes, np.ndarray)): # in case of single annotation
-                            axes = np.asarray([axes])
-                    width=1 # width of each bar in histogram
-                    for ax, param, label in zip(axes, parameters, labels):
-                            x=[]
-                            y=[]
-                            colors_hist=[]
-                            w, d, t = w, param[1], param[0]
+		if pos_annotations != None:
+			#Now, we generate len(pos_annotations) histograms (because we have len(pos_annotations) annotations)
+			f, axes = plt.subplots(1, len(pos_annotations))
+			if not(isinstance(axes, np.ndarray)): # in case of single annotation
+				axes = np.asarray([axes])
+			width=1 # width of each bar in histogram
+			for ax, param, label in zip(axes, parameters, labels):
+				x=[]
+				y=[]
+				colors_hist=[]
+				w, d, t = w, param[1], param[0]
 
-                            offset_last_green_bar = 0
-                            offset_first_red_bar = 0
-                            colors_hist = [None]*len(times)
-                            for i, time, val in zip(range(len(times)), times, values): 
-                                    colors_hist[i] = 'blue'
-                                    if not(isinstance(time, long)): #Hollande&Sarkozy
-                                            year=datetime.combine(time, datetime.min.time())
-                                            if year<=t and year>sub_month(w, t):
-                                                    if not('green' in colors_hist):
-                                                            offset_last_green_bar = i+w
-                                                    colors_hist[i] = 'green'
-                                                    
-                                            if year<=sub_month(d, t) and year>sub_month( w, sub_month(d, t)):
-                                                    if not('red' in colors_hist or 'yellow' in colors_hist):
-                                                            offset_first_red_bar = i
-                                                    if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar => intersection
-                                                            colors_hist[i] = 'yellow'
-                                                    else:
-                                                            colors_hist[i] = 'red'
-                                    else:
-                                            year=time
-                                            if year<=t and year>(t-w):
-                                                    if not('green' in colors_hist):
-                                                            offset_last_green_bar = i+w
-                                                    colors_hist[i] = 'green'
-                                            if year<=(t-d) and year>(t-d-w):
-                                                    if not('red' in colors_hist or 'yellow' in colors_hist):
-                                                            offset_first_red_bar = i
-                                                    if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar
-                                                            colors_hist[i] = 'yellow'
-                                                    else:
-                                                            colors_hist[i] = 'red'
+				offset_last_green_bar = 0
+				offset_first_red_bar = 0
+				colors_hist = [None]*len(times)
+				for i, time, val in zip(range(len(times)), times, values): 
+					colors_hist[i] = 'blue'
+					if not(isinstance(time, long)): #Hollande&Sarkozy
+						year=datetime.combine(time, datetime.min.time())
+						if year<=t and year>sub_month(w, t):
+							if not('green' in colors_hist):
+								offset_last_green_bar = i+w
+							colors_hist[i] = 'green'
+						if year<=sub_month(d, t) and year>sub_month( w, sub_month(d, t)):
+							if not('red' in colors_hist or 'yellow' in colors_hist):
+								offset_first_red_bar = i
+							if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar => intersection
+								colors_hist[i] = 'yellow'
+							else:
+								colors_hist[i] = 'red'
+					else:
+						year=time
+						if year<=t and year>(t-w):
+							if not('green' in colors_hist):
+								offset_last_green_bar = i+w
+							colors_hist[i] = 'green'
+						if year<=(t-d) and year>(t-d-w):
+							if not('red' in colors_hist or 'yellow' in colors_hist):
+								offset_first_red_bar = i
+							if colors_hist[i] == 'green': #overlapping of green and red colors in the same bar
+								colors_hist[i] = 'yellow'
+							else:
+								colors_hist[i] = 'red'
 
-                                    x.append(str(time)[:7])
-                                    y.append(val)
+						x.append(str(time)[:7])
+						y.append(val)
 
-                            ax.bar(range(len(y)), y, width=width, color=colors_hist)
-                            ax.set_xticks(np.arange(len(y)) + width/2)
-                            # In order not to display all dates on x-axes, we use modulo for reduce the numbers of date
-                            reduction_ratio = 1
-                            if len(x)>50:
-                                    reduction_ratio = len(x)/50
-                            ax.set_xticklabels(map(lambda (i,a): str(a)[:7] if (i % reduction_ratio)==0 else "", enumerate(x)), rotation=270 ) ;
-                            ax.tick_params(axis='x', labelsize=9)
+					ax.bar(range(len(y)), y, width=width, color=colors_hist)
+					ax.set_xticks(np.arange(len(y)) + width/2)
+					# In order not to display all dates on x-axes, we use modulo for reduce the numbers of date
+					reduction_ratio = 1
+					if len(x)>50:
+						reduction_ratio = len(x)/50
+					ax.set_xticklabels(map(lambda (i,a): str(a)[:7] if (i % reduction_ratio)==0 else "", enumerate(x)), rotation=270 ) ;
+					ax.tick_params(axis='x', labelsize=9)
 
-                            extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none',\
-                                            linewidth=0) # For adding "w,d,t" information on legend
-                            red_patch = mpatches.Patch(color='red') #adding red patch
-                            green_patch = mpatches.Patch(color='green')
-                            if 'yellow' in colors_hist:
-                                    yellow_patch = mpatches.Patch(color='yellow')
-                                    ax.legend([extra, red_patch, green_patch, yellow_patch],["w= "+str(w)+", d= "+str(d)+\
-                                    ", t= "+str(t)[:7], "Period 1", "Period 2", "Intersection"], prop={'size':12-len(axes)}, loc=legend_location)
-                            else:
-                                    ax.legend([extra, red_patch, green_patch],["w= "+str(w)+", d= "+str(d)+\
-                                    ", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':12-len(axes)}, loc=legend_location)
+					extra = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none',\
+									linewidth=0) # For adding "w,d,t" information on legend
+					red_patch = mpatches.Patch(color='red') #adding red patch
+					green_patch = mpatches.Patch(color='green')
+					if 'yellow' in colors_hist:
+						yellow_patch = mpatches.Patch(color='yellow')
+						ax.legend([extra, red_patch, green_patch, yellow_patch],["w= "+str(w)+", d= "+str(d)+\
+						", t= "+str(t)[:7], "Period 1", "Period 2", "Intersection"], prop={'size':12-len(axes)}, loc=legend_location)
+					else:
+						ax.legend([extra, red_patch, green_patch],["w= "+str(w)+", d= "+str(d)+\
+						", t= "+str(t)[:7], "Period 1", "Period 2"], prop={'size':12-len(axes)}, loc=legend_location)
 
-                            ax.set_title(label, fontsize=12)
-                            x1,x2,y1,y2 = ax.axis()
-                            ax.set_ylim(y1,y2+legend_horizontal_margin) # in order that legend stay up enough on the axe (screen) 
-                            if len(x)>50:
-                                    ax.set_xlim(offset_first_red_bar-15,offset_last_green_bar+5) # For Hollande&Sarkozy
-                            plt.tight_layout()
-                            plt.subplots_adjust(wspace = 0.1*len(axes)) # updating margin between axes according to len(axes)
+					ax.set_title(label, fontsize=12)
+					x1,x2,y1,y2 = ax.axis()
+					ax.set_ylim(y1,y2+legend_horizontal_margin) # in order that legend stay up enough on the axe (screen) 
+					if len(x)>50:
+						ax.set_xlim(offset_first_red_bar-15,offset_last_green_bar+5) # For Hollande&Sarkozy
+					plt.tight_layout()
+					plt.subplots_adjust(wspace = 0.1*len(axes)) # updating margin between axes according to len(axes)
 
 		plt.show()
 		return True
