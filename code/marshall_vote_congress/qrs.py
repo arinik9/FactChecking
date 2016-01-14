@@ -459,20 +459,14 @@ class qrs:
             if sr<0: # a counter-argument should be < 0
                 if len(subset_a)>0:
                     add = True
-                    remove = False
-                    remove_list = []
                     for sa in subset_a:
                         # we want to keep in the list the items which are equals (sp and sr)
                         # that is why we added not() statement in addition
                         if sp>=sa[0] and sr<=a[1] and not(sp==sa[0] and sr==sa[1]):
-                            remove=True
-                            remove_list.append(sa)
+                            subset_a.remove(sa)
                         elif sp<=sa[0] and sr>=sa[1] and not(sp==sa[0] and sr==sa[1]):
                             add = False
                             break
-                    if remove:
-                        for r in remove_list:
-                            subset_a.remove(r)
                     if add:
                         subset_a.append((sp, sr, (a,b,u,v)))
                 else: # len(subset_a) == 0 => just for the first insert
@@ -550,20 +544,14 @@ class qrs:
             sp = self.SP(a,b)
             if len(subset_a)>0:
                 add = True
-                remove = False
-                remove_list = []
                 for sa in subset_a:
                     # we want to keep in the list the items which are equals (sp and sr)
                     # that is why we added not() statement in addition
                     if sp>=sa[0] and sr<=sa[1] and not(sp==sa[0] and sr==sa[1]):
-                        remove = True
-                        remove_list.append(sa)
+                        subset_a.remove(sa)
                     elif sp<=sa[0] and sr>=sa[1] and not(sp==sa[0] and sr==sa[1]):
                         add = False
                         break
-                if remove:
-                    for r in remove_list:
-                        subset_a.remove(r)
                 if add:
                     subset_a.append((sp, sr, (a,b,u,v)))
             else: # len(subset_a) == 0 => just for the first insert
@@ -710,7 +698,7 @@ class qrs:
         for displaying a heatmap, we need to fixe entity source 'u' and cible source 'v' in this implementation
 
         @param results: list of list of 5 values. Results from execute() method
-        @param pos_annotations: List of 2 integer values (x,y) => Positions of annotations on heatmap. 'x' and 'y' starts from 0.  
+        @param pos_annotations: list of tuples => if this option is not 'None', it allows to add annotations on heatmap. Example of pos_annotations: [(10,15), (15,14)] => the first parameter of each tuple represent x-position, the second one represents y-position on heatmap
         @param legend_horizontal_margin: integer => the margin between histogram bars and legend box. It is usefull when any histogram bars are overlapping with legend. By default 150
         @param legend_location: string. the location of legend on histograms. By default "upper left". For the other options: http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.legend
 
@@ -765,10 +753,9 @@ class qrs:
                 cbar_location="right", cbar_mode="each",
                 cbar_size="7%", cbar_pad="2%", aspect=True)
 
-        #im2 = grid[0].imshow(masked_array, origin="lower", interpolation="None", cmap=shifted_cmap) # TODO it should be 'lower'?
         im2 = grid[0].imshow(masked_array, interpolation="None", cmap=shifted_cmap)
 	grid.cbar_axes[0].colorbar(im2)
-	grid[0].set_title('Relative Strength of Results (SR) => Times should be centered in each case', fontsize=14) #TODO
+	grid[0].set_title('Relative Strength of Results (SR)', fontsize=14)
 
 
         # We get table values
@@ -785,6 +772,8 @@ class qrs:
             for pos in pos_annotations:
                 i=pos[0]
                 j=pos[1]
+                if i>len(x) or j>len(x):
+                    return "Annotation error. Check your annotation list!"
                 # x: time_interval, y: d_interval 
                 if not(isinstance(x[i], int)):  #Hollande&Sarkozy
                     parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
@@ -798,12 +787,12 @@ class qrs:
                 ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
             else:
                 ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
-            ax.tick_params(axis='x', labelsize=7) #TODO
-            ax.set_yticks(np.arange(len(y))+0.5) # TODO -0.5??
-            ax.set_yticklabels(map(lambda i: str(i), y)[::-1]) # [::-1] let us te reverse a list => TODO need to reverse?
+            ax.tick_params(axis='x', labelsize=7)
+            ax.set_yticks(np.arange(len(y))+0.5)
+            ax.set_yticklabels(map(lambda i: str(i), y)[::-1]) 
             ax.grid(True)
-            ax.set_xlabel('a: Begining of the period') #TODO
-            ax.set_ylabel('b: End of the period') #TODO
+            ax.set_xlabel('a: Begining of the period')
+            ax.set_ylabel('b: End of the period')
 
     
             # Annotations
@@ -821,7 +810,7 @@ class qrs:
         This method allows to display SP heatmap.
 
         @param results: list of list of 5 values. Results from execute() method
-        @param pos_annotations: List of 2 integer values (x,y) => Positions of annotations on heatmap. 'x' and 'y' starts from 0.  
+        @param pos_annotations: list of tuples => if this option is not 'None', it allows to add annotations on heatmap. Example of pos_annotations: [(10,15), (15,14)] => the first parameter of each tuple represent x-position, the second one represents y-position on heatmap
         @param w: integer => for displaying a heatmap, we need to fixe entity source 'u' and cible source 'v' in this implementation
         @param legend_horizontal_margin: integer => the margin between histogram bars and legend box. It is usefull when any histogram bars are overlapping with legend. By default 150
         @param legend_location: string. the location of legend on histograms. By default "upper left". For the other options: http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.legend
@@ -886,9 +875,9 @@ class qrs:
                 cbar_size="7%", cbar_pad="2%")
 
         #im2 = grid[0].imshow(masked_array, origin="lower", interpolation="None", cmap=shifted_cmap)
-        im2 = grid[0].imshow(masked_array, interpolation="None", cmap=shifted_cmap) #TODO same as in SR
+        im2 = grid[0].imshow(masked_array, interpolation="None", cmap=shifted_cmap)
 	grid.cbar_axes[0].colorbar(im2)
-	grid[0].set_title('Relative Sensibility of Parameter Settings (SP) => Times should be centered in each case', fontsize=14) #TODO
+	grid[0].set_title('Relative Sensibility of Parameter Settings (SP)', fontsize=14)
 
 
         # We get table values
@@ -905,8 +894,10 @@ class qrs:
             for pos in pos_annotations:
                 i=pos[0]
                 j=pos[1]
+                if i>len(x) or j>len(x):
+                    return "Annotation error. Check your annotation list!"
                 # x: time_interval, y: d_interval 
-                if not(isinstance(x[i], int)):  #Hollande&Sarkozy
+                if not(isinstance(x[i], int)):  #Datetime
                     parameters.append((datetime.strptime(x[i], "%Y-%m-%d" ), y[j])) # corresponding parameters for each annotation
                 else:
                     parameters.append((x[i], y[j])) # corresponding parameters for each annotation
@@ -918,12 +909,12 @@ class qrs:
                 ax.set_xticklabels(map(lambda a: a[:7], x), rotation=270 ) ;
             else:
                 ax.set_xticklabels(map(lambda a: str(a), x), rotation=270 ) ;
-            ax.tick_params(axis='x', labelsize=7) #TODO
-            ax.set_yticks(np.arange(len(y))+0.5) #TODO same as in SR
-            ax.set_yticklabels(map(lambda i: str(i), y)[::-1]) #TODO same as in SR
+            ax.tick_params(axis='x', labelsize=7)
+            ax.set_yticks(np.arange(len(y))+0.5) 
+            ax.set_yticklabels(map(lambda i: str(i), y)[::-1])
             ax.grid(True)
-            ax.set_xlabel('a: Begining of the period') #TODO
-            ax.set_ylabel('b: End of the period') #TODO
+            ax.set_xlabel('a: Begining of the period')
+            ax.set_ylabel('b: End of the period')
        
 
             # Annotations
