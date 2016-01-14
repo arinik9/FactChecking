@@ -7,7 +7,7 @@ import numpy as np
 
 if __name__ == '__main__':
     # Database parameters
-    conf_path = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + "/../db-config.ini"
+    conf_path = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + "/../../db-config.ini"
 
 ################################################################################
 # Set parameters
@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
 #This query bases on entity1's 'P', '+', '-' votes and find common votes on entity2's votes
 #Asymetric comparison
-    query = """SELECT c.common/t.total FROM 
+    """query = SELECT c.common/t.total FROM 
             (SELECT count(*) AS total FROM <u> 
                 WHERE vote_created >= <a> AND vote_created < <b> AND option_key!='0') AS t,
             
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
 #This query bases on just common '-' and '+' votes
 #Symetric comparison
-    """query =  SELECT c.common/t.total FROM (SELECT count(*) AS total FROM <u>
+    query =  """SELECT c.common/t.total FROM (SELECT count(*) AS total FROM <u>
                                             WHERE vote_created >= <a> AND vote_created < <b>) AS t,
                                         (SELECT count(*) AS common FROM 
                                             (SELECT * FROM <u> WHERE  vote_created >= <a> AND vote_created < <b>) AS u,
