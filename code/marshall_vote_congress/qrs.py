@@ -459,14 +459,20 @@ class qrs:
             if sr<0: # a counter-argument should be < 0
                 if len(subset_a)>0:
                     add = True
+                    remove = False
+                    remove_list = []
                     for sa in subset_a:
                         # we want to keep in the list the items which are equals (sp and sr)
                         # that is why we added not() statement in addition
                         if sp>=sa[0] and sr<=a[1] and not(sp==sa[0] and sr==sa[1]):
-                            subset_a.remove(sa)
+                            remove=True
+                            remove_list.append(sa)
                         elif sp<=sa[0] and sr>=sa[1] and not(sp==sa[0] and sr==sa[1]):
                             add = False
                             break
+                    if remove:
+                        for r in remove_list:
+                            subset_a.remove(r)
                     if add:
                         subset_a.append((sp, sr, (a,b,u,v)))
                 else: # len(subset_a) == 0 => just for the first insert
@@ -544,14 +550,20 @@ class qrs:
             sp = self.SP(a,b)
             if len(subset_a)>0:
                 add = True
+                remove = False
+                remove_list = []
                 for sa in subset_a:
                     # we want to keep in the list the items which are equals (sp and sr)
                     # that is why we added not() statement in addition
                     if sp>=sa[0] and sr<=sa[1] and not(sp==sa[0] and sr==sa[1]):
-                        subset_a.remove(sa)
+                        remove = True
+                        remove_list.append(sa)
                     elif sp<=sa[0] and sr>=sa[1] and not(sp==sa[0] and sr==sa[1]):
                         add = False
                         break
+                if remove:
+                    for r in remove_list:
+                        subset_a.remove(r)
                 if add:
                     subset_a.append((sp, sr, (a,b,u,v)))
             else: # len(subset_a) == 0 => just for the first insert

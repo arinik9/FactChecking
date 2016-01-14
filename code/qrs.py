@@ -413,14 +413,20 @@ class qrs:
 			if sr<0: # a counter-argument should be < 0
 				if len(subset_a)>0:
 					add = True
+					remove = False
+					remove_list = []
 					for a in subset_a:
 						# we want to keep in the list the items which are equals (sp and sr)
 						# that is why we added not() statement in addition
 						if sp>=a[0] and sr<=a[1] and not(sp==a[0] and sr==a[1]):
-							subset_a.remove(a)
+						        remove = True
+                                                        remove_list.append(a)
 						elif sp<=a[0] and sr>=a[1] and not(sp==a[0] and sr==a[1]):
 							add = False
 							break
+					if remove:
+                                            for r in remove_list:
+                                                subset_a.remove(r)
 					if add:
 						subset_a.append((sp, sr, (t,w,d)))
 				else: # len(subset_a) == 0 => just for the first insert
@@ -498,14 +504,20 @@ class qrs:
 			sp = self.SP(w,d,t)
 			if len(subset_a)>0:
 				add = True
+				remove = False
+				remove_list = []
 				for a in subset_a:
 					# we want to keep in the list the items which are equals (sp and sr)
 					# that is why we added not() statement in addition
 					if sp>=a[0] and sr<=a[1] and not(sp==a[0] and sr==a[1]):
-						subset_a.remove(a)
+					        remove=True
+                                                remove_list.append(a)
 					elif sp<=a[0] and sr>=a[1] and not(sp==a[0] and sr==a[1]):
 						add = False
 						break
+				if remove:
+				        for r in remove_list:
+				            subset_a.remove(r)
 				if add:
 					subset_a.append((sp, sr, (t,w,d)))
 			else: # len(subset_a) == 0 => just for the first insert
@@ -736,6 +748,8 @@ class qrs:
 			ax.set_yticks(np.arange(len(y))-0.5)
 			ax.set_yticklabels(map(lambda i: str(i), y))
 			ax.grid(True)
+                        ax.set_xlabel('Year')
+                        ax.set_ylabel('Distance between periods')
 
 
 			# Annotations
@@ -930,6 +944,8 @@ class qrs:
 				ax.set_yticks(np.arange(len(y))-0.5)
 				ax.set_yticklabels(map(lambda i: str(i), y))
 				ax.grid(True)
+                                ax.set_xlabel('Year')
+                                ax.set_ylabel('Distance between periods')
 
 				# Annotations
                                 if pos_annotations != None:
